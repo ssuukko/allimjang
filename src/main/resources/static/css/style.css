@@ -1,0 +1,29 @@
+/* 공통 스타일 */
+body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 알림 배지 */
+.badge-notification {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    padding: 4px 8px;
+    border-radius: 50%;
+    background: #dc3545;
+    color: white;
+    font-size: 12px;
+}
