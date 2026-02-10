@@ -2,19 +2,16 @@ spring:
   application:
     name: alrimjang
   
-  # 데이터소스 설정 (H2 - 개발용)
+  # 데이터소스 설정 (Neon PostgreSQL)
   datasource:
-    # jdbc:h2:mem:alrimjang - 메모리에서만 작동, 서버 재시작하면 데이터 초기화됨
-    url: jdbc:h2:mem:alrimjang
-    username: sa  # H2 기본 사용자
-    password:     # 비밀번호 없음
-    driver-class-name: org.h2.Driver
-    
-  # H2 웹 콘솔 설정 - 브라우저에서 DB 확인 가능
-  h2:
-    console:
-      enabled: true           # 웹 콘솔 활성화
-      path: /h2-console       # 접속 경로: http://localhost:8080/h2-console
+    url: jdbc:postgresql://ep-falling-snow-aijpajmr-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+    username: neondb_owner
+    password: ${DB_PASSWORD}  # 환경변수로 관리 (보안)
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
   
   # Thymeleaf 설정
   thymeleaf:

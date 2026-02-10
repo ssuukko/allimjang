@@ -62,21 +62,21 @@
             <version>3.0.3</version>
         </dependency>
         
-        <!-- PostgreSQL Driver (나중에 사용) -->
-        <!--
+        <!-- PostgreSQL Driver (Neon) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        -->
         
-        <!-- H2 Database (개발용) -->
+        <!-- H2 Database (개발용 - 비활성화) -->
+        <!--
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+        -->
         
         <!-- Lombok -->
         <dependency>
