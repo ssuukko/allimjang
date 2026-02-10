@@ -18,4 +18,10 @@ public class NoticeServiceImpl implements NoticeService {
     public List<Notice> getNoticeList() {
         return noticeMapper.findAll();
     }
+
+    @Override
+    public Notice getNoticeById(String id) {
+        noticeMapper.increaseViewCount(id);
+        return noticeMapper.findById(id);
+    }
 }

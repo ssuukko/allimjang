@@ -57,82 +57,82 @@
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="text-center">
-            <div class="server-badge">🚀 서버 가동 중</div>
-            <h1 class="display-4 fw-bold mb-3" th:text="${serverName}">📝 알림장</h1>
-            <p class="lead text-muted" th:text="${description}">학교/회사 범용 조직 관리 시스템</p>
-            
-            <div class="info-box">
-                <div class="row text-center">
-                    <div class="col-md-6">
-                        <h6 class="text-muted">서버 포트</h6>
-                        <h4 class="text-primary" th:text="${port}">8080</h4>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted">현재 시간</h6>
-                        <h4 class="text-success" th:text="${currentTime}">2024-01-01 00:00:00</h4>
-                    </div>
-                </div>
-            </div>
+<div class="main-container">
+    <div class="text-center">
+        <div class="server-badge">🚀 서버 가동 중</div>
+        <h1 class="display-4 fw-bold mb-3" th:text="${serverName}">📝 알림장</h1>
+        <p class="lead text-muted" th:text="${description}">학교/회사 범용 조직 관리 시스템</p>
 
-            <div class="mt-4">
-                <a href="/login" class="btn btn-custom btn-lg text-white me-2">로그인</a>
-                <a href="/register" class="btn btn-outline-secondary btn-lg">회원가입</a>
-            </div>
-        </div>
-        
-        <div class="mt-5">
-            <h3 class="mb-4">🎯 주요 기능</h3>
-            <div class="row g-3">
-                <div class="col-12">
-                    <div class="card feature-card">
-                        <div class="card-body">
-                            <h5 class="card-title">📢 공지사항 관리</h5>
-                            <p class="card-text text-muted">조건별 대상 설정 및 관리</p>
-                        </div>
-                    </div>
+        <div class="info-box">
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <h6 class="text-muted">서버 포트</h6>
+                    <h4 class="text-primary" th:text="${port}">8080</h4>
                 </div>
-                <div class="col-12">
-                    <div class="card feature-card">
-                        <div class="card-body">
-                            <h5 class="card-title">💬 다자간 채팅</h5>
-                            <p class="card-text text-muted">3명 이상의 실시간 그룹 채팅</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card feature-card">
-                        <div class="card-body">
-                            <h5 class="card-title">✅ 열람 확인 시스템</h5>
-                            <p class="card-text text-muted">문서 읽음 확인 및 통계</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card feature-card">
-                        <div class="card-body">
-                            <h5 class="card-title">📊 설문 조사</h5>
-                            <p class="card-text text-muted">설문 생성 및 통계 분석</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card feature-card">
-                        <div class="card-body">
-                            <h5 class="card-title">👥 조직/그룹 관리</h5>
-                            <p class="card-text text-muted">계층적 조직 구조 관리</p>
-                        </div>
-                    </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">현재 시간</h6>
+                    <h4 class="text-success" th:text="${currentTime}">2024-01-01 00:00:00</h4>
                 </div>
             </div>
         </div>
 
-        <div class="text-center mt-4">
-            <a href="/api/info" class="btn btn-outline-primary">📡 서버 정보 API</a>
+        <div class="mt-4">
+            <a href="/login" class="btn btn-custom btn-lg text-white me-2">로그인</a>
+            <a href="/register" class="btn btn-outline-secondary btn-lg">회원가입</a>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <div class="mt-5">
+        <h3 class="mb-4">🎯 주요 기능</h3>
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h5 class="card-title">📢 공지사항 관리</h5>
+                        <p class="card-text text-muted">조건별 대상 설정 및 관리</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h5 class="card-title">💬 다자간 채팅</h5>
+                        <p class="card-text text-muted">3명 이상의 실시간 그룹 채팅</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h5 class="card-title">✅ 열람 확인 시스템</h5>
+                        <p class="card-text text-muted">문서 읽음 확인 및 통계</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h5 class="card-title">📊 설문 조사</h5>
+                        <p class="card-text text-muted">설문 생성 및 통계 분석</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card feature-card">
+                    <div class="card-body">
+                        <h5 class="card-title">👥 조직/그룹 관리</h5>
+                        <p class="card-text text-muted">계층적 조직 구조 관리</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/api/info" class="btn btn-outline-primary">📡 서버 정보 API</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

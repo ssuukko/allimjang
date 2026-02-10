@@ -9,4 +9,8 @@ import java.util.List;
 public interface NoticeMapper {
 
     List<Notice> findAll();
+
+    void increaseViewCount(String id);
+
+    Notice findById(String id);
 }

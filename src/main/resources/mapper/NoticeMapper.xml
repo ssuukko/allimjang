@@ -4,8 +4,40 @@
 
 <mapper namespace="com.alrimjang.mapper.NoticeMapper">
 
-    <select id="findAll" resultType="com.alrimjang.model.entity.Notice">
-        SELECT * FROM
+    <!-- Result Map -->
+    <resultMap id="NoticeResultMap" type="com.alrimjang.model.entity.Notice">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="authorId" column="author_id"/>
+        <result property="authorName" column="author_name"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="isImportant" column="is_important"/>
+        <result property="viewCount" column="view_count"/>
+    </resultMap>
+
+    <!-- 전체 공지사항 목록 -->
+    <select id="findAll" resultMap="NoticeResultMap">
+        SELECT id, title, content, author_id, author_name,
+               created_at, updated_at, is_important, view_count
+        FROM notice
+        ORDER BY is_important DESC, created_at DESC
     </select>
+
+    <!-- ID로 공지사항 조회 -->
+    <select id="findById" parameterType="string" resultMap="NoticeResultMap">
+        SELECT id, title, content, author_id, author_name,
+               created_at, updated_at, is_important, view_count
+        FROM notice
+        WHERE id = #{id}
+    </select>
+
+    <!-- 조회수 증가 -->
+    <update id="increaseViewCount" parameterType="string">
+        UPDATE notice
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
 
 </mapper>

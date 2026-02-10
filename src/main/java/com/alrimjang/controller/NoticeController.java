@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -22,6 +23,19 @@ public class NoticeController {
 
         model.addAttribute("notices", noticeList);
 
-        return "notices";
+        return "notices/list";
+    }
+
+    @GetMapping("{id}")
+    public String noticeDetail(@PathVariable String id, Model model) {
+        Notice notice =  noticeService.getNoticeById(id);
+
+        if(notice == null) {
+            return "redirect:/notices";
+        }
+
+        model.addAttribute("notice", notice);
+
+        return "notices/detail";
     }
 }
