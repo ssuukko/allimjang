@@ -2,18 +2,19 @@ spring:
   application:
     name: alrimjang
   
-  # 데이터소스 설정
+  # 데이터소스 설정 (H2 - 개발용)
   datasource:
-    url: jdbc:postgresql://localhost:5432/${DB_NAME:alrimjang}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+    # jdbc:h2:mem:alrimjang - 메모리에서만 작동, 서버 재시작하면 데이터 초기화됨
+    url: jdbc:h2:mem:alrimjang
+    username: sa  # H2 기본 사용자
+    password:     # 비밀번호 없음
+    driver-class-name: org.h2.Driver
+    
+  # H2 웹 콘솔 설정 - 브라우저에서 DB 확인 가능
+  h2:
+    console:
+      enabled: true           # 웹 콘솔 활성화
+      path: /h2-console       # 접속 경로: http://localhost:8080/h2-console
   
   # Thymeleaf 설정
   thymeleaf:
