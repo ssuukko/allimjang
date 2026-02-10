@@ -1,12 +1,21 @@
-package com.alrimjang.service;
+package com.alrimjang.service.impl;
 
+import com.alrimjang.mapper.NoticeMapper;
 import com.alrimjang.model.entity.Notice;
+import com.alrimjang.service.NoticeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public interface NoticeService {
+@RequiredArgsConstructor
+public class NoticeServiceImpl implements NoticeService {
 
-    List<Notice> getNoticeList();
+    private final NoticeMapper noticeMapper;
+
+    @Override
+    public List<Notice> getNoticeList() {
+        return noticeMapper.findAll();
+    }
 }

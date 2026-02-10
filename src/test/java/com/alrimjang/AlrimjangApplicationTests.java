@@ -1,4 +1,4 @@
-package test.java.com.alrimjang;
+package com.alrimjang;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

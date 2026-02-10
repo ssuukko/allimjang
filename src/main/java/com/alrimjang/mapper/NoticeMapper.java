@@ -1,4 +1,12 @@
 package com.alrimjang.mapper;
 
-public interface NoticeMapeer {
+import com.alrimjang.model.entity.Notice;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+
+@Mapper
+public interface NoticeMapper {
+
+    List<Notice> findAll();
 }
