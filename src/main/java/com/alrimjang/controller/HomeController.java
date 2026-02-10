@@ -32,7 +32,35 @@ public class HomeController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(Model model) {
+        // 사용자 정보
+        model.addAttribute("userName", "홍길동");
+        model.addAttribute("userRole", "교사");
+        model.addAttribute("userDepartment", "컴퓨터공학과");
+        
+        // 읽지 않은 메시지 수
+        model.addAttribute("unreadMessages", 5);
+        
+        // 최근 공지사항 (샘플 데이터)
+        java.util.List<java.util.Map<String, String>> notices = java.util.Arrays.asList(
+            java.util.Map.of(
+                "title", "2026년 1학기 수업 일정 안내",
+                "date", "2026-02-10",
+                "isNew", "true"
+            ),
+            java.util.Map.of(
+                "title", "교직원 회의 공지",
+                "date", "2026-02-09",
+                "isNew", "true"
+            ),
+            java.util.Map.of(
+                "title", "시설 보수 공사 안내",
+                "date", "2026-02-08",
+                "isNew", "false"
+            )
+        );
+        model.addAttribute("notices", notices);
+        
         return "dashboard";
     }
 
