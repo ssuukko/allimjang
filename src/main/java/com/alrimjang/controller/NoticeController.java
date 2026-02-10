@@ -26,7 +26,7 @@ public class NoticeController {
         return "notices/list";
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/notices/{id}")
     public String noticeDetail(@PathVariable String id, Model model) {
         Notice notice =  noticeService.getNoticeById(id);
 
