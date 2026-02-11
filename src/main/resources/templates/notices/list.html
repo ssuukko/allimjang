@@ -87,11 +87,12 @@
                             <!-- 공지사항 목록 -->
                             <tr th:each="notice : ${notices}" 
                                 th:classappend="${notice.isImportant} ? 'important-notice' : ''"
-                                class="notice-row"
-                                th:onclick="|location.href='/notices/' + ${notice.id}|">
+                                class="notice-row">
                                 <td>
-                                    <span th:if="${notice.isImportant}" class="notice-badge me-2">중요</span>
-                                    <strong th:text="${notice.title}">공지사항 제목</strong>
+                                    <a th:href="@{/notices/{id}(id=${notice.id})}" class="text-decoration-none text-dark">
+                                        <span th:if="${notice.isImportant}" class="notice-badge me-2">중요</span>
+                                        <strong th:text="${notice.title}">공지사항 제목</strong>
+                                    </a>
                                 </td>
                                 <td th:text="${notice.authorName}">작성자</td>
                                 <td th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>

@@ -40,4 +40,11 @@
         WHERE id = #{id}
     </update>
 
+    <!-- 공지사항 등록 -->
+    <insert id="insertNotice" parameterType="Notice">
+        INSERT INTO notice
+            (id, title, content, author_id, author_name, is_important)
+        VALUES
+            (#{id}::uuid, #{title}, #{content}, #{authorId}, #{authorName}, #{isImportant})
+    </insert>
 </mapper>

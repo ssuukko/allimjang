@@ -9,4 +9,6 @@ public interface NoticeService {
     List<Notice> getNoticeList();
 
     Notice getNoticeById(String id);
+
+    void createNotice(Notice notice);
 }

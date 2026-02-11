@@ -13,4 +13,6 @@ public interface NoticeMapper {
     void increaseViewCount(String id);
 
     Notice findById(String id);
+
+    void insertNotice(Notice notice);
 }

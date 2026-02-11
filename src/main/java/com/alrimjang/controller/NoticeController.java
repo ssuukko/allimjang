@@ -4,9 +4,8 @@ import com.alrimjang.model.entity.Notice;
 import com.alrimjang.service.NoticeService; // 서비스 import 필요
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -38,4 +37,23 @@ public class NoticeController {
 
         return "notices/detail";
     }
+
+    @GetMapping("/notices/new")
+    public String showNoticeForm(Model model) {
+
+        model.addAttribute("notice", new Notice());
+
+        return "notices/form";
+    }
+
+    @PostMapping("/notices")
+    public String createNotice(@ModelAttribute Notice notice) {
+
+        notice.setAuthorName("관리자");
+
+        noticeService.createNotice(notice);
+
+        return "redirect:/notices";
+    }
+
 }
