@@ -15,4 +15,8 @@ public interface NoticeMapper {
     Notice findById(String id);
 
     void insertNotice(Notice notice);
+
+    void updateNotice(Notice notice);
+
+    void deleteNotice(String id);
 }

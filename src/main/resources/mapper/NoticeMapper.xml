@@ -43,8 +43,22 @@
     <!-- 공지사항 등록 -->
     <insert id="insertNotice" parameterType="Notice">
         INSERT INTO notice
-            (id, title, content, author_id, author_name, is_important)
+             (id, title, content, author_id, author_name, is_important, created_at, updated_at)
         VALUES
-            (#{id}::uuid, #{title}, #{content}, #{authorId}, #{authorName}, #{isImportant})
+            (#{id}, #{title}, #{content}, #{authorId}, #{authorName}, #{isImportant}, NOW(), NOW())
     </insert>
+
+    <update id="updateNotice" parameterType="Notice">
+        UPDATE notice
+        SET title = #{title},
+            content = #{content},
+            updated_at = NOW(),
+            is_important = #{isImportant}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteNotice" parameterType="String">
+        DELETE FROM notice WHERE id = #{id}
+    </delete>
+
 </mapper>

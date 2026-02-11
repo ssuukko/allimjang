@@ -16,6 +16,7 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeMapper noticeMapper;
 
     @Override
+
     public List<Notice> getNoticeList() {
 
         return noticeMapper.findAll();
@@ -35,5 +36,23 @@ public class NoticeServiceImpl implements NoticeService {
         notice.setId(UUID.randomUUID().toString());
 
         noticeMapper.insertNotice(notice);
+    }
+
+    @Override
+    public void updateNotice(Notice notice) {
+
+        noticeMapper.updateNotice(notice);
+    }
+
+    @Override
+    public void deleteNotice(String id) {
+
+        noticeMapper.deleteNotice(id);
+    }
+
+    @Override
+    public Notice getNoticeByIdForEdit(String id) {
+
+        return noticeMapper.findById(id);
     }
 }

@@ -25,7 +25,9 @@
         <a href="/notices" class="btn btn-outline-secondary">← 목록으로</a>
     </div>
 
-    <form th:action="@{/notices}" th:object="${notice}" method="post">
+    <form th:action="${notice.id != null ? '/notices/' + notice.id : '/notices'}"
+          th:object="${notice}"
+          method="post">
         <div class="card">
             <div class="card-body">
                 <!-- 제목 -->

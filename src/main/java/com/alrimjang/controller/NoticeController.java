@@ -25,6 +25,16 @@ public class NoticeController {
         return "notices/list";
     }
 
+    @PostMapping("/notices")
+    public String createNotice(@ModelAttribute Notice notice) {
+
+        notice.setAuthorName("관리자");
+
+        noticeService.createNotice(notice);
+
+        return "redirect:/notices";
+    }
+
     @GetMapping("/notices/{id}")
     public String noticeDetail(@PathVariable String id, Model model) {
         Notice notice =  noticeService.getNoticeById(id);
@@ -46,14 +56,34 @@ public class NoticeController {
         return "notices/form";
     }
 
-    @PostMapping("/notices")
-    public String createNotice(@ModelAttribute Notice notice) {
+    @GetMapping("/notices/{id}/edit")
+    public String editNoticeForm(@PathVariable String id, Model model) {
+        Notice notice = noticeService.getNoticeByIdForEdit(id);
 
-        notice.setAuthorName("관리자");
+        if(notice == null) {
+            return "redirect:/notices";
+        }
 
-        noticeService.createNotice(notice);
+        model.addAttribute("notice", notice);
+        model.addAttribute("idEdit", true);
 
-        return "redirect:/notices";
+        return "notices/form";
     }
+
+    @PostMapping("/notices/{id}")
+    public String updateOrDeleteNotice(@PathVariable String id,
+                                       @RequestParam(name = "_method", required = false) String method,
+                                       @ModelAttribute Notice notice) {
+        if ("delete".equals(method)) {
+            noticeService.deleteNotice(id);
+            return "redirect:/notices";
+        }
+
+        notice.setId(id);
+        noticeService.updateNotice(notice);
+
+        return "redirect:/notices/" + id;
+    }
+
 
 }

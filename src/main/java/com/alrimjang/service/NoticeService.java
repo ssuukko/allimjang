@@ -10,5 +10,12 @@ public interface NoticeService {
 
     Notice getNoticeById(String id);
 
+    Notice  getNoticeByIdForEdit(String id);
+
     void createNotice(Notice notice);
+
+    void updateNotice(Notice notice);
+
+    void deleteNotice(String id);
+
 }
