@@ -23,7 +23,7 @@ public class SecurityConfig {
         http
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/login-process", "/error", "/hash").permitAll()
+                        .requestMatchers("/login", "/login-process", "/register", "/error", "/hash").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

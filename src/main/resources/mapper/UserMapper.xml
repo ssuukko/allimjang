@@ -10,4 +10,9 @@
         WHERE "username" = #{username}
     </select>
 
+    <insert id="insertUser" parameterType="Users">
+        INSERT INTO users ("id", "username", "password", "name", "role", "created_at", "enabled")
+        VALUES (#{id}, #{username}, #{password}, #{name}, #{role}, #{createdAt}, #{enabled})
+    </insert>
+
 </mapper>
