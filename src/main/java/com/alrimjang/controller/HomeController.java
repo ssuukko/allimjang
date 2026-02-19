@@ -26,11 +26,6 @@ public class HomeController {
         return "index";
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";
-    }
-
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         // 사용자 정보

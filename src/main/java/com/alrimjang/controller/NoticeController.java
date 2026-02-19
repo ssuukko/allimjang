@@ -1,12 +1,15 @@
 package com.alrimjang.controller;
 
+import com.alrimjang.mapper.UserMapper;
 import com.alrimjang.model.entity.Notice;
+import com.alrimjang.model.entity.Users;
 import com.alrimjang.service.NoticeService; // 서비스 import 필요
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -14,10 +17,12 @@ import java.util.List;
 public class NoticeController {
 
     private final NoticeService noticeService;
+    private final UserMapper userMapper;
 
     @GetMapping("/notices")
-    public String notices(Model model) {
+    public String notices(Model model, Principal principal) {
 
+        Users user = userMapper.findByUsername(principal.getName());
         List<Notice> noticeList = noticeService.getNoticeList();
 
         model.addAttribute("notices", noticeList);
@@ -26,12 +31,15 @@ public class NoticeController {
     }
 
     @PostMapping("/notices")
-    public String createNotice(@ModelAttribute Notice notice) {
-
-        notice.setAuthorName("관리자");
-
+    public String createNotice(@ModelAttribute Notice notice, Principal principal) {
+        if (principal != null) {
+            Users user = userMapper.findByUsername(principal.getName());
+            if (user != null) {
+                notice.setAuthorName(user.getName());
+                notice.setAuthorId(user.getId());
+            }
+        }
         noticeService.createNotice(notice);
-
         return "redirect:/notices";
     }
 

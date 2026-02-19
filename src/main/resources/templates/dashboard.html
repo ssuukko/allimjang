@@ -6,35 +6,10 @@
     <title>대시보드 - 알림장</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">📝 알림장</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard">대시보드</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/notices">공지사항</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/chat">채팅</a>
-                    </li>
-                    <li class="nav-item">
-                        <form th:action="@{/logout}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-link nav-link">로그아웃</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<body class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments/layout :: header('dashboard')}"></div>
     
-    <div class="container mt-4">
+    <main class="container mt-4 flex-grow-1">
         <h2>대시보드</h2>
         <hr>
         
@@ -67,8 +42,9 @@
                 </div>
             </div>
         </div>
-    </div>
-    
+    </main>
+    <div th:replace="~{fragments/layout :: footer}"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
