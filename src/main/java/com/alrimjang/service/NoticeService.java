@@ -27,4 +27,6 @@ public interface NoticeService {
     boolean canDelete(Notice notice, String actorId, String actorUsername, boolean isAdmin);
 
     boolean canHide(Notice notice, boolean isAdmin);
+
+    boolean canUnhide(Notice notice, boolean isAdmin);
 }

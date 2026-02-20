@@ -53,7 +53,7 @@
                     숨김
                 </button>
             </form>
-            <form th:if="${canHide and notice.getIsHidden()}" th:action="@{/notices/{id}/unhide(id=${notice.id})}" method="post" style="display: inline;">
+            <form th:if="${canUnhide and notice.getIsHidden()}" th:action="@{/notices/{id}/unhide(id=${notice.id})}" method="post" style="display: inline;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit" class="btn btn-outline-secondary"
                         onclick="return confirm('이 게시물을 숨김 해제하시겠습니까?')">

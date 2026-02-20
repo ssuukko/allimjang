@@ -92,7 +92,7 @@ public class NoticeServiceImpl implements NoticeService {
     @Override
     public void unhideNoticeByActor(String id, boolean isAdmin) {
         Notice target = getRequiredNotice(id);
-        validateCanHide(target, isAdmin);
+        validateCanUnhide(target, isAdmin);
 
         int unhiddenCount = noticeMapper.unhideNoticeByActor(id, isAdmin);
         if (unhiddenCount == 0) {
@@ -129,6 +129,11 @@ public class NoticeServiceImpl implements NoticeService {
         return notice != null && isAdmin && !Boolean.TRUE.equals(notice.getIsHidden());
     }
 
+    @Override
+    public boolean canUnhide(Notice notice, boolean isAdmin) {
+        return notice != null && isAdmin && Boolean.TRUE.equals(notice.getIsHidden());
+    }
+
     private Notice getRequiredNotice(String id) {
 
         Notice target = noticeMapper.findById(id);
@@ -157,6 +162,12 @@ public class NoticeServiceImpl implements NoticeService {
     private void validateCanHide(Notice target, boolean isAdmin) {
         if (!canHide(target, isAdmin)) {
             throw new IllegalStateException("숨김 권한이 없습니다.");
+        }
+    }
+
+    private void validateCanUnhide(Notice target, boolean isAdmin) {
+        if (!canUnhide(target, isAdmin)) {
+            throw new IllegalStateException("해제 권한이 없습니다.");
         }
     }
 }

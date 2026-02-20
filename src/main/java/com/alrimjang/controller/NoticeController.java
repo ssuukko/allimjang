@@ -69,6 +69,7 @@ public class NoticeController {
         model.addAttribute("canEdit", noticeService.canEdit(notice, actorId, actorUsername, actorIsAdmin));
         model.addAttribute("canDelete", noticeService.canDelete(notice, actorId, actorUsername, actorIsAdmin));
         model.addAttribute("canHide", noticeService.canHide(notice, actorIsAdmin));
+        model.addAttribute("canUnhide", noticeService.canUnhide(notice, actorIsAdmin));
 
         return "notices/detail";
     }
