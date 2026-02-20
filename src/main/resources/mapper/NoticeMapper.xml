@@ -14,13 +14,22 @@
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <result property="isImportant" column="is_important"/>
+        <result property="isHidden" column="is_hidden"/>
         <result property="viewCount" column="view_count"/>
     </resultMap>
 
     <!-- 전체 공지사항 목록 -->
-    <select id="findAll" resultMap="NoticeResultMap">
+    <select id="findAllVisible" resultMap="NoticeResultMap">
         SELECT id, title, content, author_id, author_name,
-               created_at, updated_at, is_important, view_count
+               created_at, updated_at, is_important, is_hidden, view_count
+        FROM notice
+        WHERE COALESCE(is_hidden, FALSE) = FALSE
+        ORDER BY is_important DESC, created_at DESC
+    </select>
+
+    <select id="findAllIncludingHidden" resultMap="NoticeResultMap">
+        SELECT id, title, content, author_id, author_name,
+               created_at, updated_at, is_important, is_hidden, view_count
         FROM notice
         ORDER BY is_important DESC, created_at DESC
     </select>
@@ -28,9 +37,17 @@
     <!-- ID로 공지사항 조회 -->
     <select id="findById" parameterType="string" resultMap="NoticeResultMap">
         SELECT id, title, content, author_id, author_name,
-               created_at, updated_at, is_important, view_count
+               created_at, updated_at, is_important, is_hidden, view_count
         FROM notice
         WHERE id = #{id}
+    </select>
+
+    <select id="findVisibleById" parameterType="string" resultMap="NoticeResultMap">
+        SELECT id, title, content, author_id, author_name,
+               created_at, updated_at, is_important, is_hidden, view_count
+        FROM notice
+        WHERE id = #{id}
+          AND COALESCE(is_hidden, FALSE) = FALSE
     </select>
 
     <!-- 조회수 증가 -->
@@ -48,17 +65,41 @@
             (#{id}, #{title}, #{content}, #{authorId}, #{authorName}, #{isImportant}, NOW(), NOW())
     </insert>
 
-    <update id="updateNotice" parameterType="Notice">
+    <!-- 공지사항 수정 -->
+    <update id="updateNoticeByActor">
         UPDATE notice
-        SET title = #{title},
-            content = #{content},
+        SET title = #{notice.title},
+            content = #{notice.content},
             updated_at = NOW(),
-            is_important = #{isImportant}
-        WHERE id = #{id}
+            is_important = #{notice.isImportant}
+        WHERE id = #{notice.id}
+          AND (author_id = #{actorId} OR author_id = #{actorUsername})
+          AND #{isAdmin} = FALSE
     </update>
 
-    <delete id="deleteNotice" parameterType="String">
-        DELETE FROM notice WHERE id = #{id}
+    <!-- 공지사항 삭제 -->
+    <delete id="deleteNoticeByActor">
+        DELETE FROM notice
+        WHERE id = #{id}
+          AND ((author_id = #{actorId} OR author_id = #{actorUsername}) OR #{isAdmin} = TRUE)
     </delete>
+
+    <update id="hideNoticeByActor">
+        UPDATE notice
+        SET is_hidden = TRUE,
+            updated_at = NOW()
+        WHERE id = #{id}
+          AND #{isAdmin} = TRUE
+          AND COALESCE(is_hidden, FALSE) = FALSE
+    </update>
+
+    <update id="unhideNoticeByActor">
+        UPDATE notice
+        SET is_hidden = FALSE,
+            updated_at = NOW()
+        WHERE id = #{id}
+          AND #{isAdmin} = TRUE
+          AND COALESCE(is_hidden, FALSE) = TRUE
+    </update>
 
 </mapper>

@@ -16,18 +16,30 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeMapper noticeMapper;
 
     @Override
-
-    public List<Notice> getNoticeList() {
-
-        return noticeMapper.findAll();
+    public List<Notice> getNoticeList(boolean includeHidden) {
+        return includeHidden ? noticeMapper.findAllIncludingHidden() : noticeMapper.findAllVisible();
     }
 
     @Override
-    public Notice getNoticeById(String id) {
+    public Notice getNoticeById(String id, boolean includeHidden) {
+        Notice notice = includeHidden ? noticeMapper.findById(id) : noticeMapper.findVisibleById(id);
+        if (notice == null) {
+            return null;
+        }
 
         noticeMapper.increaseViewCount(id);
 
-        return noticeMapper.findById(id);
+        return includeHidden ? noticeMapper.findById(id) : noticeMapper.findVisibleById(id);
+    }
+
+    @Override
+    public Notice getNoticeForEditByActor(String id, String actorId, String actorUsername, boolean isAdmin) {
+
+        Notice target = getRequiredNotice(id);
+
+        validateCanEdit(target, actorId, actorUsername, isAdmin);
+
+        return target;
     }
 
     @Override
@@ -39,20 +51,112 @@ public class NoticeServiceImpl implements NoticeService {
     }
 
     @Override
-    public void updateNotice(Notice notice) {
+    public void updateNoticeByActor(String id, Notice notice, String actorId, String actorUsername, boolean isAdmin) {
 
-        noticeMapper.updateNotice(notice);
+        Notice target = getRequiredNotice(id);
+        validateCanEdit(target, actorId, actorUsername, isAdmin);
+
+        notice.setId(id);
+        notice.setAuthorId(target.getAuthorId());
+        notice.setAuthorName(target.getAuthorName());
+
+        int updatedCount = noticeMapper.updateNoticeByActor(notice, actorId, actorUsername, isAdmin);
+        if (updatedCount == 0) {
+            throw new IllegalStateException("수정 권한이 없습니다.");
+        }
     }
 
     @Override
-    public void deleteNotice(String id) {
+    public void deleteNoticeByActor(String id, String actorId, String actorUsername, boolean isAdmin) {
 
-        noticeMapper.deleteNotice(id);
+        Notice target = getRequiredNotice(id);
+        validateCanDelete(target, actorId, actorUsername, isAdmin);
+
+        int deletedCount = noticeMapper.deleteNoticeByActor(id, actorId, actorUsername, isAdmin);
+        if (deletedCount == 0) {
+            throw new IllegalStateException("삭제 권한이 없습니다.");
+        }
     }
 
     @Override
-    public Notice getNoticeByIdForEdit(String id) {
+    public void hideNoticeByActor(String id, boolean isAdmin) {
+        Notice target = getRequiredNotice(id);
+        validateCanHide(target, isAdmin);
 
-        return noticeMapper.findById(id);
+        int hiddenCount = noticeMapper.hideNoticeByActor(id, isAdmin);
+        if (hiddenCount == 0) {
+            throw new IllegalStateException("숨김 권한이 없습니다.");
+        }
+    }
+
+    @Override
+    public void unhideNoticeByActor(String id, boolean isAdmin) {
+        Notice target = getRequiredNotice(id);
+        validateCanHide(target, isAdmin);
+
+        int unhiddenCount = noticeMapper.unhideNoticeByActor(id, isAdmin);
+        if (unhiddenCount == 0) {
+            throw new IllegalStateException("해제 권한이 없습니다.");
+        }
+    }
+
+    @Override
+    public boolean canEdit(Notice notice, String actorId, String actorUsername, boolean isAdmin) {
+
+        if (notice == null) return false;
+
+        String authorId = notice.getAuthorId();
+        boolean isAuthor = (actorId != null && actorId.equals(authorId))
+                || (actorUsername != null && actorUsername.equals(authorId));
+
+        return !isAdmin && isAuthor;
+    }
+
+    @Override
+    public boolean canDelete(Notice notice, String actorId, String actorUsername, boolean isAdmin) {
+
+        if (notice == null) return false;
+
+        String authorId = notice.getAuthorId();
+        boolean isAuthor = (actorId != null && actorId.equals(authorId))
+                || (actorUsername != null && actorUsername.equals(authorId));
+
+        return isAdmin || isAuthor;
+    }
+
+    @Override
+    public boolean canHide(Notice notice, boolean isAdmin) {
+        return notice != null && isAdmin && !Boolean.TRUE.equals(notice.getIsHidden());
+    }
+
+    private Notice getRequiredNotice(String id) {
+
+        Notice target = noticeMapper.findById(id);
+
+        if (target == null) {
+            throw new IllegalArgumentException("게시글을 찾을 수 없습니다.");
+        }
+
+        return target;
+    }
+
+    private void validateCanEdit(Notice target, String actorId, String actorUsername, boolean isAdmin) {
+
+        if (!canEdit(target, actorId, actorUsername, isAdmin)) {
+            throw new IllegalStateException("수정 권한이 없습니다.");
+        }
+    }
+
+    private void validateCanDelete(Notice target, String actorId, String actorUsername, boolean isAdmin) {
+
+        if (!canDelete(target, actorId, actorUsername, isAdmin)) {
+            throw new IllegalStateException("삭제 권한이 없습니다.");
+        }
+    }
+
+    private void validateCanHide(Notice target, boolean isAdmin) {
+        if (!canHide(target, isAdmin)) {
+            throw new IllegalStateException("숨김 권한이 없습니다.");
+        }
     }
 }

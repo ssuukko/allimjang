@@ -6,16 +6,25 @@ import java.util.List;
 
 public interface NoticeService {
 
-    List<Notice> getNoticeList();
+    List<Notice> getNoticeList(boolean includeHidden);
 
-    Notice getNoticeById(String id);
+    Notice getNoticeById(String id, boolean includeHidden);
 
-    Notice  getNoticeByIdForEdit(String id);
+    Notice getNoticeForEditByActor(String id, String actorId, String actorUsername, boolean isAdmin);
 
     void createNotice(Notice notice);
 
-    void updateNotice(Notice notice);
+    void updateNoticeByActor(String id, Notice notice, String actorId, String actorUsername, boolean isAdmin);
 
-    void deleteNotice(String id);
+    void deleteNoticeByActor(String id, String actorId, String actorUsername, boolean isAdmin);
 
+    void hideNoticeByActor(String id, boolean isAdmin);
+
+    void unhideNoticeByActor(String id, boolean isAdmin);
+
+    boolean canEdit(Notice notice, String actorId, String actorUsername, boolean isAdmin);
+
+    boolean canDelete(Notice notice, String actorId, String actorUsername, boolean isAdmin);
+
+    boolean canHide(Notice notice, boolean isAdmin);
 }

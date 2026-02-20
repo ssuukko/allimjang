@@ -44,14 +44,28 @@
         <a href="/notices" class="btn btn-outline-secondary">← 목록으로</a>
         <div class="action-buttons">
             <!-- 수정 버튼 -->
-            <a th:href="@{/notices/{id}/edit(id=${notice.id})}" class="btn btn-warning">✏️ 수정</a>
-            <!-- 삭제 버튼 -->
-            <form th:action="@{/notices/{id}(id=${notice.id})}" method="post" style="display: inline;">
+            <a th:if="${canEdit}" th:href="@{/notices/{id}/edit(id=${notice.id})}" class="btn btn-warning">✏️ 수정</a>
+            <!-- 숨김 버튼 -->
+            <form th:if="${canHide and !notice.getIsHidden()}" th:action="@{/notices/{id}/hide(id=${notice.id})}" method="post" style="display: inline;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <input type="hidden" name="_method" value="delete">
+                <button type="submit" class="btn btn-secondary"
+                        onclick="return confirm('이 게시물을 숨김 처리하시겠습니까?')">
+                    숨김
+                </button>
+            </form>
+            <form th:if="${canHide and notice.getIsHidden()}" th:action="@{/notices/{id}/unhide(id=${notice.id})}" method="post" style="display: inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="btn btn-outline-secondary"
+                        onclick="return confirm('이 게시물을 숨김 해제하시겠습니까?')">
+                     해제
+                </button>
+            </form>
+            <!-- 삭제 버튼 -->
+            <form th:if="${canDelete}" th:action="@{/notices/{id}/delete(id=${notice.id})}" method="post" style="display: inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit" class="btn btn-danger"
                         onclick="return confirm('정말로 이 공지사항을 삭제하시겠습니까?')">
-                    🗑️ 삭제
+                    삭제
                 </button>
             </form>
         </div>
@@ -63,6 +77,7 @@
         <div class="notice-header">
             <div class="mb-2">
                 <span th:if="${notice.isImportant}" class="notice-badge">중요</span>
+                <span th:if="${notice.getIsHidden()}" class="badge bg-secondary ms-2">숨김</span>
             </div>
             <h2 class="mb-0" th:text="${notice.title}">공지사항 제목</h2>
         </div>

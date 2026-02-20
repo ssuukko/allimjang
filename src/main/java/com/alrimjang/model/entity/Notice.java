@@ -18,5 +18,6 @@
       private LocalDateTime createdAt;
       private LocalDateTime updatedAt;
       private Boolean isImportant;
+      private Boolean isHidden;
       private Integer viewCount;
   }

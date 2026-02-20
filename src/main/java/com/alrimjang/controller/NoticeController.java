@@ -3,7 +3,7 @@ package com.alrimjang.controller;
 import com.alrimjang.mapper.UserMapper;
 import com.alrimjang.model.entity.Notice;
 import com.alrimjang.model.entity.Users;
-import com.alrimjang.service.NoticeService; // 서비스 import 필요
+import com.alrimjang.service.NoticeService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -19,39 +19,56 @@ public class NoticeController {
     private final NoticeService noticeService;
     private final UserMapper userMapper;
 
+    private boolean isAdmin(Users user) {
+        if (user == null) {
+            return false;
+        }
+        return "admin".equalsIgnoreCase(user.getId())
+                || "admin".equalsIgnoreCase(user.getUsername())
+                || "ADMIN".equalsIgnoreCase(user.getRole());
+    }
+
     @GetMapping("/notices")
     public String notices(Model model, Principal principal) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        boolean actorIsAdmin = isAdmin(actor);
 
-        Users user = userMapper.findByUsername(principal.getName());
-        List<Notice> noticeList = noticeService.getNoticeList();
+        List<Notice> noticeList = noticeService.getNoticeList(actorIsAdmin);
 
         model.addAttribute("notices", noticeList);
+        model.addAttribute("isAdmin", actorIsAdmin);
 
         return "notices/list";
     }
 
     @PostMapping("/notices")
     public String createNotice(@ModelAttribute Notice notice, Principal principal) {
-        if (principal != null) {
-            Users user = userMapper.findByUsername(principal.getName());
-            if (user != null) {
-                notice.setAuthorName(user.getName());
-                notice.setAuthorId(user.getId());
-            }
-        }
+
+        Users users = userMapper.findByUsername(principal.getName());
+        notice.setAuthorName(users.getName());
+        notice.setAuthorId(users.getId());
+
         noticeService.createNotice(notice);
+
         return "redirect:/notices";
     }
 
     @GetMapping("/notices/{id}")
-    public String noticeDetail(@PathVariable String id, Model model) {
-        Notice notice =  noticeService.getNoticeById(id);
+    public String noticeDetail(@PathVariable String id, Model model, Principal principal) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        String actorId = actor.getId();
+        String actorUsername = actor.getUsername();
+        boolean actorIsAdmin = isAdmin(actor);
+        Notice notice = noticeService.getNoticeById(id, actorIsAdmin);
 
         if(notice == null) {
             return "redirect:/notices";
         }
 
         model.addAttribute("notice", notice);
+        model.addAttribute("canEdit", noticeService.canEdit(notice, actorId, actorUsername, actorIsAdmin));
+        model.addAttribute("canDelete", noticeService.canDelete(notice, actorId, actorUsername, actorIsAdmin));
+        model.addAttribute("canHide", noticeService.canHide(notice, actorIsAdmin));
 
         return "notices/detail";
     }
@@ -65,12 +82,13 @@ public class NoticeController {
     }
 
     @GetMapping("/notices/{id}/edit")
-    public String editNoticeForm(@PathVariable String id, Model model) {
-        Notice notice = noticeService.getNoticeByIdForEdit(id);
+    public String editNoticeForm(@PathVariable String id, Model model, Principal principal) {
 
-        if(notice == null) {
-            return "redirect:/notices";
-        }
+        Users actor = userMapper.findByUsername(principal.getName());
+        String actorId = actor.getId();
+        String actorUsername = actor.getUsername();
+        boolean actorIsAdmin = isAdmin(actor);
+        Notice notice = noticeService.getNoticeForEditByActor(id, actorId, actorUsername, actorIsAdmin);
 
         model.addAttribute("notice", notice);
         model.addAttribute("idEdit", true);
@@ -79,19 +97,46 @@ public class NoticeController {
     }
 
     @PostMapping("/notices/{id}")
-    public String updateOrDeleteNotice(@PathVariable String id,
-                                       @RequestParam(name = "_method", required = false) String method,
-                                       @ModelAttribute Notice notice) {
-        if ("delete".equals(method)) {
-            noticeService.deleteNotice(id);
-            return "redirect:/notices";
-        }
+    public String updateNotice(@PathVariable String id,
+                               @ModelAttribute Notice notice,
+                               Principal principal) {
 
-        notice.setId(id);
-        noticeService.updateNotice(notice);
+        Users actor = userMapper.findByUsername(principal.getName());
+        String actorId = actor.getId();
+        String actorUsername = actor.getUsername();
+        boolean actorIsAdmin = isAdmin(actor);
+
+        noticeService.updateNoticeByActor(id, notice, actorId, actorUsername, actorIsAdmin);
 
         return "redirect:/notices/" + id;
     }
 
+    @PostMapping("/notices/{id}/delete")
+    public String deleteNotice(@PathVariable String id, Principal principal) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        String actorId = actor.getId();
+        String actorUsername = actor.getUsername();
+        boolean actorIsAdmin = isAdmin(actor);
 
+        noticeService.deleteNoticeByActor(id, actorId, actorUsername, actorIsAdmin);
+        return "redirect:/notices";
+    }
+
+    @PostMapping("/notices/{id}/hide")
+    public String hideNotice(@PathVariable String id, Principal principal) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        boolean actorIsAdmin = isAdmin(actor);
+
+        noticeService.hideNoticeByActor(id, actorIsAdmin);
+        return "redirect:/notices/" + id;
+    }
+
+    @PostMapping("/notices/{id}/unhide")
+    public String unhideNotice(@PathVariable String id, Principal principal) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        boolean actorIsAdmin = isAdmin(actor);
+
+        noticeService.unhideNoticeByActor(id, actorIsAdmin);
+        return "redirect:/notices/" + id;
+    }
 }
