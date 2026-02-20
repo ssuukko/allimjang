@@ -10,16 +10,20 @@ import java.util.List;
 public interface NoticeMapper {
 
     List<Notice> findVisiblePage(@Param("keyword") String keyword,
+                                 @Param("searchType") String searchType,
                                  @Param("offset") int offset,
                                  @Param("size") int size);
 
-    int countVisible(@Param("keyword") String keyword);
+    int countVisible(@Param("keyword") String keyword,
+                     @Param("searchType") String searchType);
 
     List<Notice> findIncludingHiddenPage(@Param("keyword") String keyword,
+                                         @Param("searchType") String searchType,
                                          @Param("offset") int offset,
                                          @Param("size") int size);
 
-    int countIncludingHidden(@Param("keyword") String keyword);
+    int countIncludingHidden(@Param("keyword") String keyword,
+                             @Param("searchType") String searchType);
 
     void increaseViewCount(String id);
 

@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface NoticeService {
 
-    PageResult<Notice> getNoticePage(boolean includeHidden, String keyword, PageRequest pageRequest);
+    PageResult<Notice> getNoticePage(boolean includeHidden, String keyword, String searchType, PageRequest pageRequest);
 
     Notice getNoticeById(String id, boolean includeHidden);
 

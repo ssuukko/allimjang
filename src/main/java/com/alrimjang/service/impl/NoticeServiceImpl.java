@@ -18,21 +18,29 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeMapper noticeMapper;
 
     @Override
-    public PageResult<Notice> getNoticePage(boolean includeHidden, String keyword, PageRequest pageRequest) {
+    public PageResult<Notice> getNoticePage(boolean includeHidden, String keyword, String searchType, PageRequest pageRequest) {
+        String normalizedSearchType = normalizeSearchType(searchType);
         int safeSize = pageRequest.getSize();
         int totalCount = includeHidden
-                ? noticeMapper.countIncludingHidden(keyword)
-                : noticeMapper.countVisible(keyword);
+                ? noticeMapper.countIncludingHidden(keyword, normalizedSearchType)
+                : noticeMapper.countVisible(keyword, normalizedSearchType);
 
         int totalPages = Math.max((int) Math.ceil((double) totalCount / safeSize), 1);
         int safePage = Math.min(Math.max(pageRequest.getPage(), 1), totalPages);
         int offset = (safePage - 1) * safeSize;
 
         List<Notice> items = includeHidden
-                ? noticeMapper.findIncludingHiddenPage(keyword, offset, safeSize)
-                : noticeMapper.findVisiblePage(keyword, offset, safeSize);
+                ? noticeMapper.findIncludingHiddenPage(keyword, normalizedSearchType, offset, safeSize)
+                : noticeMapper.findVisiblePage(keyword, normalizedSearchType, offset, safeSize);
 
         return PageResult.of(items, totalCount, safePage, safeSize);
+    }
+
+    private String normalizeSearchType(String searchType) {
+        if ("title".equals(searchType) || "author".equals(searchType) || "createdAt".equals(searchType)) {
+            return searchType;
+        }
+        return "all";
     }
 
     @Override

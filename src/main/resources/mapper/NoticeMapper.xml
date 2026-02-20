@@ -25,11 +25,25 @@
         FROM notice
         WHERE COALESCE(is_hidden, FALSE) = FALSE
         <if test="keyword != null and keyword != ''">
-            AND (
-                title ILIKE CONCAT('%', #{keyword}, '%')
-                OR content ILIKE CONCAT('%', #{keyword}, '%')
-                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
-            )
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'author'">
+                    AND author_name ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'createdAt'">
+                    AND TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (
+                        title ILIKE CONCAT('%', #{keyword}, '%')
+                        OR content ILIKE CONCAT('%', #{keyword}, '%')
+                        OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+                        OR TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </otherwise>
+            </choose>
         </if>
         ORDER BY is_important DESC, created_at DESC
         LIMIT #{size} OFFSET #{offset}
@@ -40,11 +54,25 @@
         FROM notice
         WHERE COALESCE(is_hidden, FALSE) = FALSE
         <if test="keyword != null and keyword != ''">
-            AND (
-                title ILIKE CONCAT('%', #{keyword}, '%')
-                OR content ILIKE CONCAT('%', #{keyword}, '%')
-                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
-            )
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'author'">
+                    AND author_name ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'createdAt'">
+                    AND TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (
+                        title ILIKE CONCAT('%', #{keyword}, '%')
+                        OR content ILIKE CONCAT('%', #{keyword}, '%')
+                        OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+                        OR TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </otherwise>
+            </choose>
         </if>
     </select>
 
@@ -54,11 +82,25 @@
         FROM notice
         WHERE 1=1
         <if test="keyword != null and keyword != ''">
-            AND (
-                title ILIKE CONCAT('%', #{keyword}, '%')
-                OR content ILIKE CONCAT('%', #{keyword}, '%')
-                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
-            )
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'author'">
+                    AND author_name ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'createdAt'">
+                    AND TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (
+                        title ILIKE CONCAT('%', #{keyword}, '%')
+                        OR content ILIKE CONCAT('%', #{keyword}, '%')
+                        OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+                        OR TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </otherwise>
+            </choose>
         </if>
         ORDER BY is_important DESC, created_at DESC
         LIMIT #{size} OFFSET #{offset}
@@ -69,11 +111,25 @@
         FROM notice
         WHERE 1=1
         <if test="keyword != null and keyword != ''">
-            AND (
-                title ILIKE CONCAT('%', #{keyword}, '%')
-                OR content ILIKE CONCAT('%', #{keyword}, '%')
-                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
-            )
+            <choose>
+                <when test="searchType == 'title'">
+                    AND title ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'author'">
+                    AND author_name ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="searchType == 'createdAt'">
+                    AND TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <otherwise>
+                    AND (
+                        title ILIKE CONCAT('%', #{keyword}, '%')
+                        OR content ILIKE CONCAT('%', #{keyword}, '%')
+                        OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+                        OR TO_CHAR(created_at, 'YYYY-MM-DD') ILIKE CONCAT('%', #{keyword}, '%')
+                    )
+                </otherwise>
+            </choose>
         </if>
     </select>
 

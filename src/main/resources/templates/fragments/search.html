@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<body>
+<div th:fragment="searchForm(basePath, keyword, searchType, pageSize, placeholder)" class="notice-search-fragment">
+    <form method="get" th:action="@{${basePath}}" class="row g-2 mb-3 notice-search-form">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="size" th:value="${pageSize}">
+        <div class="col-md-3">
+            <select class="form-select notice-search-type" name="searchType">
+                <option value="all" th:selected="${searchType == 'all'}">전체</option>
+                <option value="title" th:selected="${searchType == 'title'}">제목</option>
+                <option value="author" th:selected="${searchType == 'author'}">작성자</option>
+                <option value="createdAt" th:selected="${searchType == 'createdAt'}">작성일</option>
+            </select>
+        </div>
+        <div class="col-md-7">
+            <input type="text" class="form-control notice-keyword" name="keyword"
+                   th:placeholder="${placeholder}"
+                   th:value="${keyword}">
+            <small class="text-muted notice-search-help d-none">작성일은 날짜 선택으로 입력됩니다.</small>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-outline-primary">검색</button>
+        </div>
+    </form>
+    <script>
+        (function () {
+            const container = document.currentScript.closest('.notice-search-fragment');
+            if (!container) return;
+            const form = container.querySelector('.notice-search-form');
+            if (!form) return;
+
+            const searchType = form.querySelector('.notice-search-type');
+            const keyword = form.querySelector('.notice-keyword');
+            const help = form.querySelector('.notice-search-help');
+            if (!searchType || !keyword || !help) return;
+
+            const initialKeyword = keyword.value || '';
+            let datePicker = null;
+
+            const applyInputMode = function () {
+                if (searchType.value === 'createdAt') {
+                    keyword.type = 'text';
+                    keyword.placeholder = '날짜를 선택하세요';
+                    help.classList.remove('d-none');
+                    if (window.flatpickr) {
+                        if (!datePicker) {
+                            datePicker = flatpickr(keyword, {
+                                dateFormat: 'Y-m-d',
+                                allowInput: true
+                            });
+                        }
+                        if (initialKeyword && /^\d{4}-\d{2}-\d{2}$/.test(initialKeyword)) {
+                            datePicker.setDate(initialKeyword, false, 'Y-m-d');
+                        }
+                        datePicker.open();
+                    } else {
+                        // Fallback for CDN load delay.
+                        keyword.type = 'date';
+                    }
+                } else {
+                    if (datePicker) {
+                        datePicker.destroy();
+                        datePicker = null;
+                    }
+                    keyword.type = 'text';
+                    keyword.placeholder = '검색어를 입력하세요';
+                    help.classList.add('d-none');
+                }
+            };
+
+            searchType.addEventListener('change', applyInputMode);
+            applyInputMode();
+        })();
+    </script>
+</div>
+</body>
+</html>

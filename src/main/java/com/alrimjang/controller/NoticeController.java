@@ -34,15 +34,17 @@ public class NoticeController {
     public String notices(Model model,
                           Principal principal,
                           @RequestParam(name = "keyword", defaultValue = "") String keyword,
+                          @RequestParam(name = "searchType", defaultValue = "all") String searchType,
                           @ModelAttribute("pageRequest") @Valid PageRequest pageRequest) {
         Users actor = userMapper.findByUsername(principal.getName());
         boolean actorIsAdmin = isAdmin(actor);
 
-        PageResult<Notice> pageResult = noticeService.getNoticePage(actorIsAdmin, keyword, pageRequest);
+        PageResult<Notice> pageResult = noticeService.getNoticePage(actorIsAdmin, keyword, searchType, pageRequest);
 
         model.addAttribute("notices", pageResult.getItems());
         model.addAttribute("isAdmin", actorIsAdmin);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("searchType", searchType);
         model.addAttribute("currentPage", pageResult.getCurrentPage());
         model.addAttribute("pageSize", pageResult.getSize());
         model.addAttribute("totalPages", pageResult.getTotalPages());
