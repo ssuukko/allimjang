@@ -7,6 +7,7 @@ import com.alrimjang.model.entity.Notice;
 import com.alrimjang.model.entity.Users;
 import com.alrimjang.service.NoticeService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,23 +22,21 @@ public class NoticeController {
     private final NoticeService noticeService;
     private final UserMapper userMapper;
 
-    private boolean isAdmin(Users user) {
-        if (user == null) {
+    private boolean isAdmin(Authentication authentication) {
+        if (authentication == null) {
             return false;
         }
-        return "admin".equalsIgnoreCase(user.getId())
-                || "admin".equalsIgnoreCase(user.getUsername())
-                || "ADMIN".equalsIgnoreCase(user.getRole());
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     @GetMapping("/notices")
     public String notices(Model model,
-                          Principal principal,
+                          Authentication authentication,
                           @RequestParam(name = "keyword", defaultValue = "") String keyword,
                           @RequestParam(name = "searchType", defaultValue = "all") String searchType,
                           @ModelAttribute("pageRequest") @Valid PageRequest pageRequest) {
-        Users actor = userMapper.findByUsername(principal.getName());
-        boolean actorIsAdmin = isAdmin(actor);
+        boolean actorIsAdmin = isAdmin(authentication);
 
         PageResult<Notice> pageResult = noticeService.getNoticePage(actorIsAdmin, keyword, searchType, pageRequest);
 
@@ -66,11 +65,11 @@ public class NoticeController {
     }
 
     @GetMapping("/notices/{id}")
-    public String noticeDetail(@PathVariable String id, Model model, Principal principal) {
+    public String noticeDetail(@PathVariable String id, Model model, Principal principal, Authentication authentication) {
         Users actor = userMapper.findByUsername(principal.getName());
         String actorId = actor.getId();
         String actorUsername = actor.getUsername();
-        boolean actorIsAdmin = isAdmin(actor);
+        boolean actorIsAdmin = isAdmin(authentication);
         Notice notice = noticeService.getNoticeById(id, actorIsAdmin);
 
         if(notice == null) {
@@ -95,12 +94,12 @@ public class NoticeController {
     }
 
     @GetMapping("/notices/{id}/edit")
-    public String editNoticeForm(@PathVariable String id, Model model, Principal principal) {
+    public String editNoticeForm(@PathVariable String id, Model model, Principal principal, Authentication authentication) {
 
         Users actor = userMapper.findByUsername(principal.getName());
         String actorId = actor.getId();
         String actorUsername = actor.getUsername();
-        boolean actorIsAdmin = isAdmin(actor);
+        boolean actorIsAdmin = isAdmin(authentication);
         Notice notice = noticeService.getNoticeForEditByActor(id, actorId, actorUsername, actorIsAdmin);
 
         model.addAttribute("notice", notice);
@@ -112,12 +111,13 @@ public class NoticeController {
     @PostMapping("/notices/{id}")
     public String updateNotice(@PathVariable String id,
                                @ModelAttribute Notice notice,
-                               Principal principal) {
+                               Principal principal,
+                               Authentication authentication) {
 
         Users actor = userMapper.findByUsername(principal.getName());
         String actorId = actor.getId();
         String actorUsername = actor.getUsername();
-        boolean actorIsAdmin = isAdmin(actor);
+        boolean actorIsAdmin = isAdmin(authentication);
 
         noticeService.updateNoticeByActor(id, notice, actorId, actorUsername, actorIsAdmin);
 
@@ -125,29 +125,27 @@ public class NoticeController {
     }
 
     @PostMapping("/notices/{id}/delete")
-    public String deleteNotice(@PathVariable String id, Principal principal) {
+    public String deleteNotice(@PathVariable String id, Principal principal, Authentication authentication) {
         Users actor = userMapper.findByUsername(principal.getName());
         String actorId = actor.getId();
         String actorUsername = actor.getUsername();
-        boolean actorIsAdmin = isAdmin(actor);
+        boolean actorIsAdmin = isAdmin(authentication);
 
         noticeService.deleteNoticeByActor(id, actorId, actorUsername, actorIsAdmin);
         return "redirect:/notices";
     }
 
     @PostMapping("/notices/{id}/hide")
-    public String hideNotice(@PathVariable String id, Principal principal) {
-        Users actor = userMapper.findByUsername(principal.getName());
-        boolean actorIsAdmin = isAdmin(actor);
+    public String hideNotice(@PathVariable String id, Authentication authentication) {
+        boolean actorIsAdmin = isAdmin(authentication);
 
         noticeService.hideNoticeByActor(id, actorIsAdmin);
         return "redirect:/notices/" + id;
     }
 
     @PostMapping("/notices/{id}/unhide")
-    public String unhideNotice(@PathVariable String id, Principal principal) {
-        Users actor = userMapper.findByUsername(principal.getName());
-        boolean actorIsAdmin = isAdmin(actor);
+    public String unhideNotice(@PathVariable String id, Authentication authentication) {
+        boolean actorIsAdmin = isAdmin(authentication);
 
         noticeService.unhideNoticeByActor(id, actorIsAdmin);
         return "redirect:/notices/" + id;

@@ -5,6 +5,7 @@ import com.alrimjang.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,6 +25,9 @@ public class SecurityConfig {
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/login-process", "/register", "/error").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/notices/*/hide", "/notices/*/unhide").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/notices/new", "/notices/*/edit").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/notices", "/notices/*", "/notices/*/delete").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
