@@ -19,19 +19,62 @@
     </resultMap>
 
     <!-- 전체 공지사항 목록 -->
-    <select id="findAllVisible" resultMap="NoticeResultMap">
+    <select id="findVisiblePage" resultMap="NoticeResultMap">
         SELECT id, title, content, author_id, author_name,
                created_at, updated_at, is_important, is_hidden, view_count
         FROM notice
         WHERE COALESCE(is_hidden, FALSE) = FALSE
+        <if test="keyword != null and keyword != ''">
+            AND (
+                title ILIKE CONCAT('%', #{keyword}, '%')
+                OR content ILIKE CONCAT('%', #{keyword}, '%')
+                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
         ORDER BY is_important DESC, created_at DESC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
-    <select id="findAllIncludingHidden" resultMap="NoticeResultMap">
+    <select id="countVisible" resultType="int">
+        SELECT COUNT(*)
+        FROM notice
+        WHERE COALESCE(is_hidden, FALSE) = FALSE
+        <if test="keyword != null and keyword != ''">
+            AND (
+                title ILIKE CONCAT('%', #{keyword}, '%')
+                OR content ILIKE CONCAT('%', #{keyword}, '%')
+                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
+
+    <select id="findIncludingHiddenPage" resultMap="NoticeResultMap">
         SELECT id, title, content, author_id, author_name,
                created_at, updated_at, is_important, is_hidden, view_count
         FROM notice
+        WHERE 1=1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                title ILIKE CONCAT('%', #{keyword}, '%')
+                OR content ILIKE CONCAT('%', #{keyword}, '%')
+                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
         ORDER BY is_important DESC, created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countIncludingHidden" resultType="int">
+        SELECT COUNT(*)
+        FROM notice
+        WHERE 1=1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                title ILIKE CONCAT('%', #{keyword}, '%')
+                OR content ILIKE CONCAT('%', #{keyword}, '%')
+                OR author_name ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
     </select>
 
     <!-- ID로 공지사항 조회 -->

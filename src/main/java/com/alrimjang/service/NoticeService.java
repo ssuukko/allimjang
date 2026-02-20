@@ -1,12 +1,14 @@
 package com.alrimjang.service;
 
+import com.alrimjang.model.common.PageRequest;
+import com.alrimjang.model.common.PageResult;
 import com.alrimjang.model.entity.Notice;
 
 import java.util.List;
 
 public interface NoticeService {
 
-    List<Notice> getNoticeList(boolean includeHidden);
+    PageResult<Notice> getNoticePage(boolean includeHidden, String keyword, PageRequest pageRequest);
 
     Notice getNoticeById(String id, boolean includeHidden);
 

@@ -1,16 +1,18 @@
 package com.alrimjang.controller;
 
 import com.alrimjang.mapper.UserMapper;
+import com.alrimjang.model.common.PageRequest;
+import com.alrimjang.model.common.PageResult;
 import com.alrimjang.model.entity.Notice;
 import com.alrimjang.model.entity.Users;
 import com.alrimjang.service.NoticeService;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,14 +31,22 @@ public class NoticeController {
     }
 
     @GetMapping("/notices")
-    public String notices(Model model, Principal principal) {
+    public String notices(Model model,
+                          Principal principal,
+                          @RequestParam(name = "keyword", defaultValue = "") String keyword,
+                          @ModelAttribute("pageRequest") @Valid PageRequest pageRequest) {
         Users actor = userMapper.findByUsername(principal.getName());
         boolean actorIsAdmin = isAdmin(actor);
 
-        List<Notice> noticeList = noticeService.getNoticeList(actorIsAdmin);
+        PageResult<Notice> pageResult = noticeService.getNoticePage(actorIsAdmin, keyword, pageRequest);
 
-        model.addAttribute("notices", noticeList);
+        model.addAttribute("notices", pageResult.getItems());
         model.addAttribute("isAdmin", actorIsAdmin);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("currentPage", pageResult.getCurrentPage());
+        model.addAttribute("pageSize", pageResult.getSize());
+        model.addAttribute("totalPages", pageResult.getTotalPages());
+        model.addAttribute("totalCount", pageResult.getTotalCount());
 
         return "notices/list";
     }

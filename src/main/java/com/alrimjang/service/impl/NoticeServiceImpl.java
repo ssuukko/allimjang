@@ -1,6 +1,8 @@
 package com.alrimjang.service.impl;
 
 import com.alrimjang.mapper.NoticeMapper;
+import com.alrimjang.model.common.PageRequest;
+import com.alrimjang.model.common.PageResult;
 import com.alrimjang.model.entity.Notice;
 import com.alrimjang.service.NoticeService;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +18,21 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeMapper noticeMapper;
 
     @Override
-    public List<Notice> getNoticeList(boolean includeHidden) {
-        return includeHidden ? noticeMapper.findAllIncludingHidden() : noticeMapper.findAllVisible();
+    public PageResult<Notice> getNoticePage(boolean includeHidden, String keyword, PageRequest pageRequest) {
+        int safeSize = pageRequest.getSize();
+        int totalCount = includeHidden
+                ? noticeMapper.countIncludingHidden(keyword)
+                : noticeMapper.countVisible(keyword);
+
+        int totalPages = Math.max((int) Math.ceil((double) totalCount / safeSize), 1);
+        int safePage = Math.min(Math.max(pageRequest.getPage(), 1), totalPages);
+        int offset = (safePage - 1) * safeSize;
+
+        List<Notice> items = includeHidden
+                ? noticeMapper.findIncludingHiddenPage(keyword, offset, safeSize)
+                : noticeMapper.findVisiblePage(keyword, offset, safeSize);
+
+        return PageResult.of(items, totalCount, safePage, safeSize);
     }
 
     @Override

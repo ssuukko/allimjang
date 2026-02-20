@@ -9,9 +9,17 @@ import java.util.List;
 @Mapper
 public interface NoticeMapper {
 
-    List<Notice> findAllVisible();
+    List<Notice> findVisiblePage(@Param("keyword") String keyword,
+                                 @Param("offset") int offset,
+                                 @Param("size") int size);
 
-    List<Notice> findAllIncludingHidden();
+    int countVisible(@Param("keyword") String keyword);
+
+    List<Notice> findIncludingHiddenPage(@Param("keyword") String keyword,
+                                         @Param("offset") int offset,
+                                         @Param("size") int size);
+
+    int countIncludingHidden(@Param("keyword") String keyword);
 
     void increaseViewCount(String id);
 
