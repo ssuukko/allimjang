@@ -63,6 +63,43 @@
                         <strong>중요 공지로 설정</strong> (목록 상단 고정)
                     </label>
                 </div>
+
+                <div class="mt-4 border rounded p-3">
+                    <h5 class="mb-3">공지 대상</h5>
+
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="targetAll" name="targetAll" value="true" checked>
+                        <label class="form-check-label" for="targetAll">전체 사용자에게 발송</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">역할 선택</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check" th:each="role : ${availableRoles}">
+                                <input class="form-check-input target-role" type="checkbox" name="targetRoles"
+                                       th:id="${'role_' + role}" th:value="${role}" disabled>
+                                <label class="form-check-label" th:for="${'role_' + role}" th:text="${role}">ROLE_USER</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label fw-semibold">그룹 선택</label>
+                        <div class="d-flex flex-wrap gap-3" th:if="${!#lists.isEmpty(availableGroups)}">
+                            <div class="form-check" th:each="group : ${availableGroups}">
+                                <input class="form-check-input target-group" type="checkbox" name="targetGroupIds"
+                                       th:id="${'group_' + group.id}" th:value="${group.id}" disabled>
+                                <label class="form-check-label" th:for="${'group_' + group.id}">
+                                    <span th:text="${group.name}">3학년 2반</span>
+                                    <small class="text-muted ms-1" th:text="${'(' + group.code + ')'}">(SCH-3-2)</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="text-muted small" th:if="${#lists.isEmpty(availableGroups)}">
+                            등록된 그룹이 없습니다.
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card-footer bg-white">
@@ -77,5 +114,27 @@
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const targetAll = document.getElementById('targetAll');
+        const roleChecks = document.querySelectorAll('.target-role');
+        const groupChecks = document.querySelectorAll('.target-group');
+
+        function syncTargetInputs() {
+            const disabled = targetAll.checked;
+            roleChecks.forEach((checkbox) => {
+                checkbox.disabled = disabled;
+                if (disabled) checkbox.checked = false;
+            });
+            groupChecks.forEach((checkbox) => {
+                checkbox.disabled = disabled;
+                if (disabled) checkbox.checked = false;
+            });
+        }
+
+        targetAll.addEventListener('change', syncTargetInputs);
+        syncTargetInputs();
+    });
+</script>
 </body>
 </html>

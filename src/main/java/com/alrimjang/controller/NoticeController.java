@@ -1,26 +1,32 @@
 package com.alrimjang.controller;
 
+import com.alrimjang.mapper.GroupMapper;
 import com.alrimjang.mapper.UserMapper;
 import com.alrimjang.model.common.PageRequest;
 import com.alrimjang.model.common.PageResult;
 import com.alrimjang.model.entity.Notice;
 import com.alrimjang.model.entity.Users;
+import com.alrimjang.service.NoticeAudienceService;
 import com.alrimjang.service.NoticeService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
+import java.util.Arrays;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
 public class NoticeController {
 
     private final NoticeService noticeService;
+    private final NoticeAudienceService noticeAudienceService;
     private final UserMapper userMapper;
+    private final GroupMapper groupMapper;
 
     private boolean isAdmin(Authentication authentication) {
         if (authentication == null) {
@@ -53,13 +59,19 @@ public class NoticeController {
     }
 
     @PostMapping("/notices")
-    public String createNotice(@ModelAttribute Notice notice, Principal principal) {
+    public String createNotice(@ModelAttribute Notice notice,
+                               @RequestParam(name = "targetAll", defaultValue = "false") boolean targetAll,
+                               @RequestParam(name = "targetRoles", required = false) List<String> targetRoles,
+                               @RequestParam(name = "targetGroupIds", required = false) List<String> targetGroupIds,
+                               Principal principal) {
 
         Users users = userMapper.findByUsername(principal.getName());
         notice.setAuthorName(users.getName());
         notice.setAuthorId(users.getId());
 
         noticeService.createNotice(notice);
+        noticeAudienceService.configureTargets(notice.getId(), targetAll, targetRoles, targetGroupIds);
+        noticeAudienceService.deliverNotice(notice.getId());
 
         return "redirect:/notices";
     }
@@ -72,7 +84,7 @@ public class NoticeController {
         boolean actorIsAdmin = isAdmin(authentication);
         Notice notice = noticeService.getNoticeById(id, actorIsAdmin);
 
-        if(notice == null) {
+        if (notice == null) {
             return "redirect:/notices";
         }
 
@@ -89,6 +101,8 @@ public class NoticeController {
     public String showNoticeForm(Model model) {
 
         model.addAttribute("notice", new Notice());
+        model.addAttribute("availableRoles", Arrays.asList("ROLE_USER", "ROLE_ADMIN"));
+        model.addAttribute("availableGroups", groupMapper.findAll());
 
         return "notices/form";
     }
@@ -104,6 +118,8 @@ public class NoticeController {
 
         model.addAttribute("notice", notice);
         model.addAttribute("idEdit", true);
+        model.addAttribute("availableRoles", Arrays.asList("ROLE_USER", "ROLE_ADMIN"));
+        model.addAttribute("availableGroups", groupMapper.findAll());
 
         return "notices/form";
     }
