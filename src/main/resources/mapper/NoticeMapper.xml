@@ -173,7 +173,6 @@
             is_important = #{notice.isImportant}
         WHERE id = #{notice.id}
           AND (author_id = #{actorId} OR author_id = #{actorUsername})
-          AND #{isAdmin} = FALSE
     </update>
 
     <!-- 공지사항 삭제 -->

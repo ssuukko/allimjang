@@ -132,7 +132,7 @@ public class NoticeServiceImpl implements NoticeService {
         boolean isAuthor = (actorId != null && actorId.equals(authorId))
                 || (actorUsername != null && actorUsername.equals(authorId));
 
-        return !isAdmin && isAuthor;
+        return isAuthor;
     }
 
     @Override

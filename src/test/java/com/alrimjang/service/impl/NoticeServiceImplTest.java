@@ -40,7 +40,7 @@ class NoticeServiceImplTest {
     }
 
     @Test
-    void if_admin_when_canEdit_then_false() {
+    void if_admin_and_author_when_canEdit_then_true() {
         // if
         Notice notice = notice("author-1", false);
 
@@ -48,7 +48,7 @@ class NoticeServiceImplTest {
         boolean result = noticeService.canEdit(notice, "author-1", "admin", true);
 
         // then
-        assertThat(result).isFalse();
+        assertThat(result).isTrue();
     }
 
     @Test
