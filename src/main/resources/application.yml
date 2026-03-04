@@ -61,7 +61,7 @@ logging:
 
 # 서버 설정
 server:
-  port: 9090
+  port: ${PORT:9090}
   servlet:
     context-path: /
     encoding:

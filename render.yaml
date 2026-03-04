@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: alrimjang
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DB_PASSWORD
+        sync: false
