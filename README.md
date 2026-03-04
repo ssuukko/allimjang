@@ -1,6 +1,6 @@
-# 스마트 알림장 (Alrimjang)
+# 알림장 (Alrimjang)
 
-> 교사와 학생, 학부모를 하나로 잇는 디지털 소통 플랫폼
+> 디지털 소통 플랫폼
 
 ---
 
@@ -305,3 +305,4 @@ This project is licensed under the MIT License.
 ## Author
 
 **ssuukko** — [GitHub Profile](https://github.com/ssuukko)
+
