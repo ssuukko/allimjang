@@ -2,25 +2,25 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <body>
 <div th:fragment="searchForm(basePath, keyword, searchType, pageSize, placeholder)" class="notice-search-fragment">
-    <form method="get" th:action="@{${basePath}}" class="row g-2 mb-3 notice-search-form">
+    <form method="get" th:action="@{${basePath}}" class="row g-2 mb-3 notice-search-form align-items-center">
         <input type="hidden" name="page" value="1">
         <input type="hidden" name="size" th:value="${pageSize}">
-        <div class="col-md-3">
-            <select class="form-select notice-search-type" name="searchType">
+        <div class="col-lg-3 col-md-4">
+            <select class="form-select c-select notice-search-type" name="searchType">
                 <option value="all" th:selected="${searchType == 'all'}">전체</option>
                 <option value="title" th:selected="${searchType == 'title'}">제목</option>
                 <option value="author" th:selected="${searchType == 'author'}">작성자</option>
                 <option value="createdAt" th:selected="${searchType == 'createdAt'}">작성일</option>
             </select>
         </div>
-        <div class="col-md-7">
-            <input type="text" class="form-control notice-keyword" name="keyword"
+        <div class="col-lg-7 col-md-6">
+            <input type="text" class="form-control c-input notice-keyword" name="keyword"
                    th:placeholder="${placeholder}"
                    th:value="${keyword}">
-            <small class="text-muted notice-search-help d-none">작성일은 날짜 선택으로 입력됩니다.</small>
+            <small class="c-muted notice-search-help d-none">작성일은 날짜 선택으로 입력됩니다.</small>
         </div>
-        <div class="col-md-2 d-grid">
-            <button type="submit" class="btn btn-outline-primary">검색</button>
+        <div class="col-lg-2 col-md-2 d-grid">
+            <button type="submit" class="btn c-btn c-btn-outline">검색</button>
         </div>
     </form>
     <script>
@@ -55,7 +55,6 @@
                         }
                         datePicker.open();
                     } else {
-                        // Fallback for CDN load delay.
                         keyword.type = 'date';
                     }
                 } else {

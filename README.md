@@ -1,10 +1,10 @@
-# 📝 스마트 알림장 (Alrimjang Project)
+# 스마트 알림장 (Alrimjang Project)
 
 > 교사와 학생, 학부모를 하나로 잇는 디지털 소통 플랫폼
 
 ---
 
-## 📌 1. 프로젝트 개요
+## 1. 프로젝트 개요
 
 **목적**: 기존 종이 알림장이나 단체 채팅방의 불편함을 해소하고, 공지 사항 전달 및 확인 여부를 체계적으로 관리합니다.
 
@@ -14,7 +14,7 @@
 
 ---
 
-## 🛠 2. 기술 스택 (Tech Stack)
+## 2. 기술 스택 (Tech Stack)
 
 | 구분 | 기술 | 상세 |
 |------|------|------|
@@ -26,7 +26,7 @@
 
 ---
 
-## 📁 3. 프로젝트 구조 (Project Structure)
+## 3. 프로젝트 구조 (Project Structure)
 
 ```
 src
@@ -47,7 +47,7 @@ src
 
 ---
 
-## 🚀 4. 설치 및 실행 가이드 (Setup & Installation)
+## 4. 설치 및 실행 가이드 (Setup & Installation)
 
 ### 4-1. 환경 변수 설정
 
@@ -70,7 +70,7 @@ git clone https://github.com/ssuukko/alrimjang.git
 
 ---
 
-## ✨ 5. 핵심 기능 (Features)
+## 5. 핵심 기능 (Features)
 
 - **공지 사항 관리**: 교사의 공지 작성, 수정, 삭제 및 파일 첨부 기능.
 - **열람 확인 시스템**: 학생/학부모의 공지 확인 여부를 실시간으로 체크.
@@ -79,7 +79,7 @@ git clone https://github.com/ssuukko/alrimjang.git
 
 ---
 
-## 🗄️ 6. DB 설계 (ERD)
+## 6. DB 설계 (ERD)
 
 ### 주요 테이블
 
@@ -163,11 +163,11 @@ erDiagram
     }
 ```
 
-> 📊 **상세 ERD**: 전체 테이블과 관계는 [erd_diagram.md](file:///C:/Users/eisoft31/.gemini/antigravity/brain/bc43cae6-9fd5-408c-9e14-744e59994a0d/erd_diagram.md) 참고
+> **상세 ERD**: 전체 테이블과 관계는 [erd_diagram.md](file:///C:/Users/eisoft31/.gemini/antigravity/brain/bc43cae6-9fd5-408c-9e14-744e59994a0d/erd_diagram.md) 참고
 
 ---
 
-## 📝 7. 커밋 컨벤션 (Commit Convention)
+## 7. 커밋 컨벤션 (Commit Convention)
 
 | 타입 | 설명 |
 |------|------|
@@ -179,7 +179,7 @@ erDiagram
 
 ---
 
-## 👨‍💻 8. 개발 환경
+## 8. 개발 환경
 
 - **IDE**: IntelliJ IDEA
 - **Database**: PostgreSQL (Local)
@@ -187,12 +187,12 @@ erDiagram
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
 ---
 
-## 👤 Author
+## Author
 
 **ssuukko** - [GitHub Profile](https://github.com/ssuukko)

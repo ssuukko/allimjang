@@ -10,6 +10,12 @@
         WHERE "username" = #{username}
     </select>
 
+    <select id="findAllUsers" resultType="Users">
+        SELECT "id", "username", "name", "role", "created_at", "enabled"
+        FROM users
+        ORDER BY "enabled" DESC, "name" ASC
+    </select>
+
     <insert id="insertUser" parameterType="Users">
         INSERT INTO users ("id", "username", "password", "name", "role", "created_at", "enabled")
         VALUES (#{id}, #{username}, #{password}, #{name}, #{role}, #{createdAt}, #{enabled})

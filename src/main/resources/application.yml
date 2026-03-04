@@ -61,7 +61,7 @@ logging:
 
 # 서버 설정
 server:
-  port: 8080
+  port: 9090
   servlet:
     context-path: /
     encoding:
@@ -71,3 +71,13 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+
+app:
+  info:
+    server-name: "알림장 (Alrimjang)"
+    description: "학교/회사 범용 조직 관리 시스템"
+    version: "1.0.0"
+    framework: "Spring Boot 3.2.2"
+    status: "running"
+  notice:
+    available-roles: ROLE_USER,ROLE_ADMIN

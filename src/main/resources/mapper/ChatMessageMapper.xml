@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alrimjang.mapper.ChatMessageMapper">
+
+    <insert id="insert" parameterType="com.alrimjang.model.entity.ChatMessage">
+        INSERT INTO chat_messages (id, room_id, sender_id, sender_name, content, created_at)
+        VALUES (#{id}, #{roomId}, #{senderId}, #{senderName}, #{content}, #{createdAt})
+    </insert>
+
+    <select id="findRecentByRoomId" resultType="com.alrimjang.model.entity.ChatMessage">
+        SELECT id, room_id, sender_id, sender_name, content, created_at
+        FROM chat_messages
+        WHERE room_id = #{roomId}
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="countUnreadByRoomAndUser" resultType="int">
+        SELECT COUNT(*)
+        FROM chat_messages m
+        LEFT JOIN chat_room_reads r
+               ON r.room_id = m.room_id
+              AND r.user_id = #{userId}
+        WHERE m.room_id = #{roomId}
+          AND m.sender_id &lt;&gt; #{userId}
+          AND (r.last_read_at IS NULL OR m.created_at &gt; r.last_read_at)
+    </select>
+</mapper>

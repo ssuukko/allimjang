@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <body>
+<link rel="stylesheet" th:href="@{/css/style.css}">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary" th:fragment="header(activeMenu)">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">📝 알림장</a>
+<nav class="navbar navbar-expand-lg navbar-dark c-navbar" th:fragment="header(activeMenu)">
+    <div class="container-fluid px-lg-4">
+        <a class="navbar-brand" href="/">ALRIMJANG</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
                 <li class="nav-item">
                     <a class="nav-link"
                        th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''"
@@ -22,9 +23,26 @@
                        href="/notices">공지사항</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link"
-                       th:classappend="${activeMenu == 'chat'} ? ' active' : ''"
-                       href="/chat">채팅</a>
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle"
+                           href="#"
+                           role="button"
+                           id="noticePreviewButton"
+                           data-bs-toggle="dropdown"
+                           data-bs-auto-close="outside"
+                           aria-expanded="false">
+                            알림
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-0 c-notice-preview-menu" aria-labelledby="noticePreviewButton">
+                            <div class="c-notice-preview-header">최근 알림</div>
+                            <div id="noticePreviewList" class="c-notice-preview-list">
+                                <div class="c-notice-preview-empty">불러오는 중...</div>
+                            </div>
+                            <div class="c-notice-preview-footer">
+                                <a href="/api/users/me/receipts" class="small text-decoration-none">전체 알림(JSON)</a>
+                            </div>
+                        </div>
+                    </div>
                 </li>
                 <li class="nav-item d-flex align-items-center">
                     <form th:action="@{/logout}" method="post" class="m-0 p-0">
@@ -40,9 +58,233 @@
     </div>
 </nav>
 
-<footer th:fragment="footer" class="mt-auto py-4 border-top bg-light">
-    <div class="container text-center text-muted small">
-        © 2026 알림장. All rights reserved.
+<div th:fragment="memberPanel">
+    <button id="globalMemberToggle" type="button" class="c-member-toggle-btn">회원목록</button>
+
+    <aside id="globalMemberPanel" class="c-member-panel is-collapsed">
+        <div class="c-member-panel__header">
+            <span>회원 상태</span>
+            <div class="d-flex gap-1">
+                <button id="globalMemberRefresh" class="btn btn-sm c-btn c-btn-outline">새로고침</button>
+                <button id="globalMemberClose" class="btn btn-sm c-btn c-btn-outline">닫기</button>
+            </div>
+        </div>
+        <div id="globalMemberList" class="c-member-panel__list">
+            <div class="text-muted small">불러오는 중...</div>
+        </div>
+    </aside>
+
+    <div id="memberContextMenu" class="c-member-context-menu d-none">
+        <button id="memberChatAction" type="button" class="dropdown-item">채팅하기</button>
+    </div>
+
+    <script>
+        (function () {
+            const button = document.getElementById('noticePreviewButton');
+            const list = document.getElementById('noticePreviewList');
+            if (!button || !list) return;
+
+            let loaded = false;
+
+            const escapeHtml = function (value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            };
+
+            const formatDate = function (value) {
+                if (!value) return '-';
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return value;
+                const pad = n => String(n).padStart(2, '0');
+                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate())
+                    + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+            };
+
+            const renderItems = function (items) {
+                if (!Array.isArray(items) || items.length === 0) {
+                    list.innerHTML = '<div class="c-notice-preview-empty">받은 알림이 없습니다.</div>';
+                    return;
+                }
+
+                const html = items.slice(0, 10).map(item => {
+                    const unread = !item.readAt ? '<span class="c-notice-preview-unread">안읽음</span>' : '';
+                    const title = escapeHtml(item.noticeTitle || '(제목 없음)');
+                    const deliveredAt = formatDate(item.deliveredAt);
+                    return ''
+                        + '<div class="c-notice-preview-item">'
+                        +   '<p class="c-notice-preview-title">' + title + '</p>'
+                        +   '<div class="c-notice-preview-meta">' + unread + deliveredAt + '</div>'
+                        + '</div>';
+                }).join('');
+                list.innerHTML = html;
+            };
+
+            const renderError = function () {
+                list.innerHTML = '<div class="c-notice-preview-empty">알림을 불러오지 못했습니다.</div>';
+            };
+
+            button.addEventListener('show.bs.dropdown', function () {
+                if (loaded) return;
+                fetch('/api/users/me/receipts?unreadOnly=false', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('failed');
+                        return res.json();
+                    })
+                    .then(data => {
+                        renderItems(data);
+                        loaded = true;
+                    })
+                    .catch(() => renderError());
+            });
+        })();
+
+        (function () {
+            const panel = document.getElementById('globalMemberPanel');
+            const toggleBtn = document.getElementById('globalMemberToggle');
+            const closeBtn = document.getElementById('globalMemberClose');
+            const list = document.getElementById('globalMemberList');
+            const refreshBtn = document.getElementById('globalMemberRefresh');
+            const menu = document.getElementById('memberContextMenu');
+            const chatAction = document.getElementById('memberChatAction');
+
+            if (!panel || !toggleBtn || !closeBtn) return;
+
+            let selectedUsername = null;
+            let refreshMembers = null;
+
+            const setPanelOpen = function (open) {
+                panel.classList.toggle('is-collapsed', !open);
+                toggleBtn.classList.toggle('is-hidden', open);
+            };
+
+            const hideMenu = function () {
+                if (!menu) return;
+                menu.classList.add('d-none');
+                selectedUsername = null;
+            };
+
+            toggleBtn.addEventListener('click', function () {
+                setPanelOpen(true);
+                if (typeof refreshMembers === 'function') {
+                    refreshMembers();
+                }
+            });
+
+            closeBtn.addEventListener('click', function () {
+                setPanelOpen(false);
+                hideMenu();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    hideMenu();
+                    setPanelOpen(false);
+                }
+            });
+
+            if (!list || !menu || !chatAction) return;
+
+            const escapeHtml = function (value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            };
+
+            const showMenu = function (x, y, username) {
+                selectedUsername = username;
+                menu.style.left = x + 'px';
+                menu.style.top = y + 'px';
+                menu.classList.remove('d-none');
+            };
+
+            const renderMembers = function (members) {
+                if (!Array.isArray(members) || members.length === 0) {
+                    list.innerHTML = '<div class="text-muted small">다른 회원이 없습니다.</div>';
+                    return;
+                }
+
+                const html = members.map(member => {
+                    const status = member.online ? '활동중' : '비활동중';
+                    const dotClass = member.online ? 'c-member-dot--online' : 'c-member-dot--offline';
+                    const meTag = member.me ? ' <span class="badge text-bg-light border ms-1">나</span>' : '';
+                    return ''
+                        + '<div class="c-member-item" data-username="' + escapeHtml(member.username) + '" data-me="' + (member.me ? 'true' : 'false') + '">'
+                        +   '<div class="c-member-item__text">'
+                        +     '<div class="c-member-item__name">' + escapeHtml(member.name || member.username) + meTag + '</div>'
+                        +     '<div class="c-member-item__meta">@' + escapeHtml(member.username) + '</div>'
+                        +   '</div>'
+                        +   '<div class="c-member-item__status">'
+                        +     '<span class="c-member-dot ' + dotClass + '"></span>' + status
+                        +   '</div>'
+                        + '</div>';
+                }).join('');
+                list.innerHTML = html;
+            };
+
+            refreshMembers = function () {
+                fetch('/api/chat/members')
+                    .then(res => res.json())
+                    .then(renderMembers)
+                    .catch(() => {
+                        list.innerHTML = '<div class="text-danger small">회원 목록을 불러오지 못했습니다.</div>';
+                    });
+            };
+
+            list.addEventListener('contextmenu', function (e) {
+                const item = e.target.closest('.c-member-item');
+                if (!item) return;
+                if (item.dataset.me === 'true') return;
+                e.preventDefault();
+                showMenu(e.clientX, e.clientY, item.dataset.username);
+            });
+
+            list.addEventListener('click', hideMenu);
+
+            chatAction.addEventListener('click', function () {
+                if (!selectedUsername) return;
+
+                fetch('/api/chat/direct-room/' + encodeURIComponent(selectedUsername))
+                    .then(res => {
+                        if (!res.ok) throw new Error('failed');
+                        return res.json();
+                    })
+                    .then(data => {
+                        const url = '/chat?room=' + encodeURIComponent(data.roomId) + '&partner=' + encodeURIComponent(data.targetUsername);
+                        window.location.href = url;
+                    })
+                    .catch(() => {
+                        alert('채팅방을 열 수 없습니다.');
+                    })
+                    .finally(() => hideMenu());
+            });
+
+            document.addEventListener('click', hideMenu);
+            document.addEventListener('scroll', hideMenu, true);
+            window.addEventListener('resize', hideMenu);
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', refreshMembers);
+            }
+
+            refreshMembers();
+            setInterval(refreshMembers, 15000);
+        })();
+    </script>
+</div>
+
+<footer th:fragment="footer" class="mt-auto py-4 c-footer">
+    <div class="container text-center small">
+        © 2026 ALRIMJANG. All rights reserved.
     </div>
 </footer>
 
