@@ -697,6 +697,136 @@ a:hover {
     font-size: 0.88rem;
 }
 
+.c-admin-page {
+    background:
+            radial-gradient(160% 120% at 5% -5%, rgba(19, 70, 116, 0.14), rgba(19, 70, 116, 0)),
+            radial-gradient(120% 80% at 100% 0%, rgba(176, 121, 33, 0.14), rgba(176, 121, 33, 0)),
+            linear-gradient(180deg, #eef2f6 0%, #e8edf3 100%);
+}
+
+.c-admin-main {
+    max-width: 1380px;
+}
+
+.c-admin-layout {
+    align-items: flex-start;
+}
+
+.c-admin-surface {
+    border: 1px solid rgba(17, 42, 71, 0.14);
+    border-radius: 20px;
+    background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(251, 253, 255, 0.96));
+    box-shadow: 0 18px 40px rgba(21, 41, 67, 0.1);
+}
+
+.c-admin-nav-card {
+    position: sticky;
+    top: 92px;
+    border: 0;
+    border-radius: 18px;
+    background:
+            linear-gradient(160deg, #17324a 0%, #20496b 62%, #184160 100%);
+    color: #eff6ff;
+    box-shadow: 0 18px 36px rgba(12, 29, 48, 0.28);
+}
+
+.c-admin-nav-title {
+    color: #d8e8fb;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+}
+
+.c-admin-console-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.c-admin-console-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #7ff0c3;
+    box-shadow: 0 0 0 4px rgba(127, 240, 195, 0.18);
+}
+
+.c-admin-console-sub {
+    color: rgba(219, 235, 252, 0.82);
+    font-size: 0.76rem;
+}
+
+.c-admin-console-badge {
+    display: inline-block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    color: #102335;
+    background: linear-gradient(180deg, #f4dfae 0%, #e7be67 100%);
+    border-radius: 9px;
+    padding: 0.18rem 0.5rem;
+}
+
+.c-admin-nav-list .c-admin-nav-item {
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #edf4ff;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    padding: 0.62rem 0.82rem;
+    transition: all 0.18s ease;
+}
+
+.c-admin-nav-list .c-admin-nav-item:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+.c-admin-nav-list .c-admin-nav-item.active {
+    background: #f3e2bd;
+    color: #23384f;
+    border-color: #f7e8c8;
+}
+
+.c-admin-ghost-btn {
+    border-width: 1px;
+    border-color: rgba(24, 48, 78, 0.25);
+    background: #f7f9fd;
+    color: #2a405d;
+}
+
+.c-admin-ghost-btn:hover {
+    border-color: rgba(24, 48, 78, 0.36);
+    background: #edf2f9;
+    color: #1d3049;
+}
+
+.c-admin-table thead th {
+    background: #f2f6fb;
+    color: #314a66;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.c-admin-table tbody tr:nth-child(even) {
+    background: rgba(243, 247, 252, 0.72);
+}
+
+.c-admin-table tbody tr:hover {
+    background: rgba(223, 234, 247, 0.66);
+}
+
+@media (max-width: 991.98px) {
+    .c-admin-nav-card {
+        position: static;
+        top: auto;
+    }
+}
+
 @keyframes c-fade-up {
     from {
         opacity: 0;

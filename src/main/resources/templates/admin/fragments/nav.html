@@ -2,27 +2,27 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <body>
 <aside th:fragment="sidebar(active)">
-    <div class="card c-card">
+    <div class="card c-card c-admin-nav-card">
         <div class="card-body p-3">
-            <h6 class="mb-3">관리자 메뉴</h6>
-            <div class="list-group">
+            <h6 class="mb-3 c-admin-nav-title">관리자 메뉴</h6>
+            <div class="list-group c-admin-nav-list">
                 <a href="/admin"
-                   class="list-group-item list-group-item-action"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
                    th:classappend="${active == 'home'} ? ' active' : ''">
                     관리자 홈
                 </a>
                 <a href="/admin/noticewriters"
-                   class="list-group-item list-group-item-action"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
                    th:classappend="${active == 'noticewriters'} ? ' active' : ''">
                     공지 작성 권한
                 </a>
                 <a href="/admin/notifications/new"
-                   class="list-group-item list-group-item-action"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
                    th:classappend="${active == 'notifications'} ? ' active' : ''">
                     알림 작성
                 </a>
                 <a href="/admin/users"
-                   class="list-group-item list-group-item-action"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
                    th:classappend="${active == 'users'} ? ' active' : ''">
                     회원 관리
                 </a>
