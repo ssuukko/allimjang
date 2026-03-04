@@ -7,8 +7,8 @@ spring:
   
   # 데이터소스 설정 (Neon PostgreSQL)
   datasource:
-    url: jdbc:postgresql://ep-falling-snow-aijpajmr-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-    username: neondb_owner
+    url: ${DB_URL:jdbc:postgresql://ep-falling-snow-aijpajmr-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require}
+    username: ${DB_USERNAME:neondb_owner}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
