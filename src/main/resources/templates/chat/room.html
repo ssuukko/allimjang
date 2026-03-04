@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 - 알림장</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/layout :: header('chat')}"></div>
+<div th:replace="~{fragments/layout :: memberPanel}"></div>
+
+<main class="container c-main flex-grow-1">
+    <section class="c-surface p-4 p-lg-5">
+        <div class="c-page-header">
+            <h2 id="chatTitle">채팅</h2>
+            <div class="d-flex align-items-center gap-2">
+                <span id="roomBadge" class="c-pill-brand">Room: general</span>
+                <span id="unreadBadge" class="badge text-bg-warning">안읽음 0</span>
+            </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+            <div class="col-md-4">
+                <select id="roomSelect" class="form-select c-select">
+                    <option value="general">general</option>
+                    <option value="class-1">class-1</option>
+                    <option value="teachers">teachers</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <input id="customRoomInput" class="form-control c-input" placeholder="직접 roomId 입력 (예: grade3-2)">
+            </div>
+            <div class="col-md-2 d-grid">
+                <button id="joinRoomBtn" class="btn c-btn c-btn-outline">방 이동</button>
+            </div>
+        </div>
+
+        <div id="chatBox" class="border rounded-4 p-3 mb-3 bg-white" style="height: 460px; overflow-y: auto;"></div>
+
+        <div class="d-flex gap-2">
+            <input id="msgInput" class="form-control c-input" placeholder="메시지를 입력하세요">
+            <button id="sendBtn" class="btn btn-primary c-btn c-btn-primary">전송</button>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    let roomId = (params.get("room") || "general").trim();
+    const partner = params.get("partner");
+
+    const chatTitle = document.getElementById("chatTitle");
+    const roomBadge = document.getElementById("roomBadge");
+    const roomSelect = document.getElementById("roomSelect");
+    const customRoomInput = document.getElementById("customRoomInput");
+    const joinRoomBtn = document.getElementById("joinRoomBtn");
+    const chatBox = document.getElementById("chatBox");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const unreadBadge = document.getElementById("unreadBadge");
+
+    let stompClient = null;
+    let subscription = null;
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function applyRoomLabel() {
+        if (partner) {
+            chatTitle.textContent = "채팅 - @" + partner;
+        }
+        roomBadge.textContent = "Room: " + roomId;
+        customRoomInput.value = roomId;
+        roomSelect.value = ["general", "class-1", "teachers"].includes(roomId) ? roomId : "general";
+    }
+
+    function applyUnreadBadge(count) {
+        unreadBadge.textContent = "안읽음 " + count;
+        unreadBadge.classList.toggle("d-none", count === 0);
+    }
+
+    function appendMessage(m) {
+        const item = document.createElement("div");
+        item.className = "mb-2";
+        item.innerHTML = "<strong>" + escapeHtml(m.senderName) + "</strong>: " + escapeHtml(m.content);
+        chatBox.appendChild(item);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function loadHistory() {
+        chatBox.innerHTML = "";
+        fetch("/api/chat/rooms/" + encodeURIComponent(roomId) + "/messages")
+            .then(res => res.json())
+            .then(list => list.forEach(appendMessage))
+            .catch(() => {
+                const item = document.createElement("div");
+                item.className = "text-danger";
+                item.textContent = "메시지 불러오기에 실패했습니다.";
+                chatBox.appendChild(item);
+            });
+    }
+
+    function subscribeRoom() {
+        if (!stompClient || !stompClient.connected) return;
+        if (subscription) {
+            subscription.unsubscribe();
+        }
+        subscription = stompClient.subscribe("/topic/chat." + roomId, function (frame) {
+            appendMessage(JSON.parse(frame.body));
+            refreshUnreadCount();
+        });
+    }
+
+    function connectSocket() {
+        const socket = new SockJS("/ws-chat");
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function () {
+            subscribeRoom();
+        });
+    }
+
+    function moveRoom(nextRoomId) {
+        const cleaned = (nextRoomId || "").trim();
+        if (!cleaned) return;
+        roomId = cleaned;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set("room", roomId);
+        url.searchParams.delete("partner");
+        window.history.replaceState({}, "", url);
+
+        applyRoomLabel();
+        loadHistory();
+        subscribeRoom();
+        markAsRead();
+        refreshUnreadCount();
+    }
+
+    function sendMessage() {
+        const content = msgInput.value.trim();
+        if (!content || !stompClient || !stompClient.connected) return;
+
+        stompClient.send("/app/chat/send", {}, JSON.stringify({
+            roomId: roomId,
+            content: content
+        }));
+        msgInput.value = "";
+        msgInput.focus();
+    }
+
+    function refreshUnreadCount() {
+        fetch("/api/chat/rooms/" + encodeURIComponent(roomId) + "/unread-count")
+            .then(res => res.json())
+            .then(data => applyUnreadBadge(data.count || 0))
+            .catch(() => applyUnreadBadge(0));
+    }
+
+    function markAsRead() {
+        fetch("/api/chat/rooms/" + encodeURIComponent(roomId) + "/read", { method: "POST" })
+            .then(() => applyUnreadBadge(0))
+            .catch(() => {});
+    }
+
+    roomSelect.addEventListener("change", function () {
+        moveRoom(roomSelect.value);
+    });
+
+    joinRoomBtn.addEventListener("click", function () {
+        moveRoom(customRoomInput.value);
+    });
+
+    sendBtn.addEventListener("click", sendMessage);
+    msgInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    window.addEventListener("focus", function () {
+        markAsRead();
+        refreshUnreadCount();
+    });
+
+    applyRoomLabel();
+    loadHistory();
+    connectSocket();
+    markAsRead();
+    refreshUnreadCount();
+</script>
+</body>
+</html>

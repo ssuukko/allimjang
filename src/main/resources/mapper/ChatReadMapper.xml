@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alrimjang.mapper.ChatReadMapper">
+
+    <insert id="markAsRead">
+        INSERT INTO chat_room_reads (room_id, user_id, last_read_at)
+        VALUES (#{roomId}, #{userId}, NOW())
+        ON CONFLICT (user_id, room_id)
+        DO UPDATE SET last_read_at = EXCLUDED.last_read_at
+    </insert>
+
+</mapper>

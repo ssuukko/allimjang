@@ -1,0 +1,11 @@
+package com.alrimjang.mapper;
+
+import com.alrimjang.model.entity.Group;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+
+@Mapper
+public interface GroupMapper {
+    List<Group> findAll();
+}

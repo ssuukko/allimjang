@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.alrimjang.mapper.NoticeAudienceMapper">
+
+    <resultMap id="NoticeReceiptResultMap" type="com.alrimjang.model.entity.NoticeReceipt">
+        <id property="id" column="id"/>
+        <result property="noticeId" column="notice_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="deliveredAt" column="delivered_at"/>
+        <result property="readAt" column="read_at"/>
+        <result property="noticeTitle" column="notice_title"/>
+    </resultMap>
+
+    <select id="countNotice" resultType="int">
+        SELECT COUNT(*)
+        FROM notice
+        WHERE id = #{noticeId}
+    </select>
+
+    <delete id="deleteTargetsByNoticeId">
+        DELETE FROM notice_targets
+        WHERE notice_id = #{noticeId}
+    </delete>
+
+    <insert id="insertTarget" parameterType="NoticeTarget">
+        INSERT INTO notice_targets (id, notice_id, target_type, target_value)
+        VALUES (#{id}, #{noticeId}, #{noticeTargetType}, #{targetValue})
+    </insert>
+
+    <select id="findRecipientUserIds" resultType="string">
+        SELECT DISTINCT u.id
+        FROM users u
+        WHERE u.enabled = TRUE
+          AND (
+              EXISTS (
+                  SELECT 1
+                  FROM notice_targets nt
+                  WHERE nt.notice_id = #{noticeId}
+                    AND nt.target_type = 'ALL'
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM notice_targets nt
+                  WHERE nt.notice_id = #{noticeId}
+                    AND nt.target_type = 'ROLE'
+                    AND nt.target_value = u.role
+              )
+              OR EXISTS (
+                  SELECT 1
+                  FROM notice_targets nt
+                  JOIN group_members gm ON gm.group_id = nt.target_value
+                  WHERE nt.notice_id = #{noticeId}
+                    AND nt.target_type = 'GROUP'
+                    AND gm.user_id = u.id
+              )
+          )
+    </select>
+
+    <insert id="insertReceipts">
+        INSERT INTO notice_receipts (id, notice_id, user_id, delivered_at, read_at)
+        VALUES
+        <foreach collection="receipts" item="r" separator=",">
+            (#{r.id}, #{r.noticeId}, #{r.userId}, #{r.deliveredAt}, #{r.readAt})
+        </foreach>
+        ON CONFLICT (notice_id, user_id) DO NOTHING
+    </insert>
+
+    <update id="markAsRead">
+        UPDATE notice_receipts
+        SET read_at = NOW()
+        WHERE notice_id = #{noticeId}
+          AND user_id = #{userId}
+          AND read_at IS NULL
+    </update>
+
+    <select id="findReceiptsByUser" resultMap="NoticeReceiptResultMap">
+        SELECT nr.id,
+               nr.notice_id,
+               nr.user_id,
+               nr.delivered_at,
+               nr.read_at,
+               n.title AS notice_title
+        FROM notice_receipts nr
+        JOIN notice n ON n.id = nr.notice_id
+        WHERE nr.user_id = #{userId}
+        <if test="unreadOnly">
+            AND nr.read_at IS NULL
+        </if>
+        ORDER BY nr.delivered_at DESC
+    </select>
+
+</mapper>
