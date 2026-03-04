@@ -5,6 +5,7 @@ import com.alrimjang.mapper.UserMapper;
 import com.alrimjang.model.common.PageRequest;
 import com.alrimjang.model.common.PageResult;
 import com.alrimjang.model.entity.Notice;
+import com.alrimjang.model.entity.NoticeReceipt;
 import com.alrimjang.model.entity.Users;
 import com.alrimjang.service.NoticeAudienceService;
 import com.alrimjang.service.NoticeService;
@@ -17,7 +18,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -41,14 +45,26 @@ public class NoticeController {
     @GetMapping("/notices")
     public String notices(Model model,
                           Authentication authentication,
+                          Principal principal,
                           @RequestParam(name = "keyword", defaultValue = "") String keyword,
                           @RequestParam(name = "searchType", defaultValue = "all") String searchType,
                           @ModelAttribute("pageRequest") @Valid PageRequest pageRequest) {
         boolean actorIsAdmin = isAdmin(authentication);
 
         PageResult<Notice> pageResult = noticeService.getNoticePage(actorIsAdmin, keyword, searchType, pageRequest);
+        Set<String> readNoticeIds = Collections.emptySet();
+        if (principal != null) {
+            Users actor = userMapper.findByUsername(principal.getName());
+            if (actor != null) {
+                readNoticeIds = noticeAudienceService.findMyReceipts(actor.getId(), false).stream()
+                        .filter(NoticeReceipt::isRead)
+                        .map(NoticeReceipt::getNoticeId)
+                        .collect(Collectors.toSet());
+            }
+        }
 
         model.addAttribute("notices", pageResult.getItems());
+        model.addAttribute("readNoticeIds", readNoticeIds);
         model.addAttribute("isAdmin", actorIsAdmin);
         model.addAttribute("keyword", keyword);
         model.addAttribute("searchType", searchType);
@@ -88,6 +104,12 @@ public class NoticeController {
 
         if (notice == null) {
             return "redirect:/notices";
+        }
+
+        try {
+            noticeAudienceService.markAsRead(id, actorId);
+        } catch (IllegalArgumentException ignored) {
+            // 대상자가 아니거나 이미 읽음 처리된 경우는 무시
         }
 
         model.addAttribute("notice", notice);

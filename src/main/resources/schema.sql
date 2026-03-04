@@ -19,3 +19,6 @@ CREATE TABLE IF NOT EXISTS chat_room_reads (
 
 CREATE INDEX IF NOT EXISTS idx_chat_room_reads_room_user
     ON chat_room_reads(room_id, user_id);
+
+ALTER TABLE IF EXISTS users
+    ADD COLUMN IF NOT EXISTS can_post_notice BOOLEAN NOT NULL DEFAULT FALSE;

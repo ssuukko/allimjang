@@ -5,20 +5,26 @@
 <mapper namespace="com.alrimjang.mapper.UserMapper">
 
     <select id="findByUsername" parameterType="string" resultType="Users">
-        SELECT "id", "username", "password", "name", "role", "created_at", "enabled"
+        SELECT "id", "username", "password", "name", "role", "created_at", "enabled", "can_post_notice"
         FROM users
         WHERE "username" = #{username}
     </select>
 
     <select id="findAllUsers" resultType="Users">
-        SELECT "id", "username", "name", "role", "created_at", "enabled"
+        SELECT "id", "username", "name", "role", "created_at", "enabled", "can_post_notice"
         FROM users
         ORDER BY "enabled" DESC, "name" ASC
     </select>
 
+    <update id="updateNoticeWritePermission">
+        UPDATE users
+        SET can_post_notice = #{canPostNotice}
+        WHERE id = #{userId}
+    </update>
+
     <insert id="insertUser" parameterType="Users">
-        INSERT INTO users ("id", "username", "password", "name", "role", "created_at", "enabled")
-        VALUES (#{id}, #{username}, #{password}, #{name}, #{role}, #{createdAt}, #{enabled})
+        INSERT INTO users ("id", "username", "password", "name", "role", "created_at", "enabled", "can_post_notice")
+        VALUES (#{id}, #{username}, #{password}, #{name}, #{role}, #{createdAt}, #{enabled}, #{canPostNotice})
     </insert>
 
 </mapper>

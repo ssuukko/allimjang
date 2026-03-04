@@ -10,11 +10,11 @@
 <body>
 <div class="c-login-shell">
     <section class="c-surface c-login-card c-fade-up">
-        <div class="p-4 p-lg-5">
-            <div class="text-center mb-4">
-                <span class="c-pill-brand">ALRIMJANG</span>
-                <h2 class="mt-3 mb-2">로그인</h2>
-                <p class="c-muted mb-0">계정으로 로그인하여 서비스를 이용하세요.</p>
+        <div class="p-4 p-lg-5 c-login-card__inner">
+            <div class="c-login-card__top text-center mb-4">
+                <div class="c-login-brand">ALRIMJANG</div>
+                <h2 class="mt-3 mb-1">로그인</h2>
+                <p class="c-login-subtitle mb-0">계정으로 로그인하여 서비스를 이용하세요.</p>
             </div>
 
             <div th:if="${param.error}" class="alert alert-danger">
@@ -27,23 +27,24 @@
 
             <form th:action="@{/login-process}" method="post" class="mt-3">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <div class="mb-3">
+                <div class="mb-3 c-login-field">
                     <label for="username" class="form-label c-form-label">아이디</label>
                     <input type="text" class="form-control c-input" id="username" name="username" required autofocus>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3 c-login-field">
                     <label for="password" class="form-label c-form-label">비밀번호</label>
                     <input type="password" class="form-control c-input" id="password" name="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary c-btn c-btn-primary w-100 mt-2">로그인</button>
+                <button type="submit" class="btn btn-primary c-btn c-btn-primary w-100 mt-3">로그인</button>
             </form>
 
             <div th:if="${param.registered}" class="alert alert-success mt-3 mb-0">
                 회원가입이 완료되었습니다. 로그인해주세요.
             </div>
 
-            <div class="mt-3 text-center">
-                <a href="/register" class="text-decoration-none">회원가입</a>
+            <div class="c-login-footer mt-4 text-center">
+                <span class="c-muted">계정이 없으신가요?</span>
+                <a href="/register" class="text-decoration-none ms-1">회원가입</a>
             </div>
         </div>
     </section>

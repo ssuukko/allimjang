@@ -17,4 +17,5 @@ public class Users {
     private String role;
     private LocalDateTime createdAt;
     private Boolean enabled;
+    private Boolean canPostNotice;
 }

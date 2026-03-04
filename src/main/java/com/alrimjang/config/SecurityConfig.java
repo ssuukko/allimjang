@@ -26,10 +26,12 @@ public class SecurityConfig {
                 .userDetailsService(customUserDetailsService)
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/ws-chat/**", "/api/chat/**"))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .requestMatchers("/login", "/login-process", "/register", "/error").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/notices/*/hide", "/notices/*/unhide").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/notices/new", "/notices/*/edit").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/notices", "/notices/*", "/notices/*/delete").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/notices/new", "/notices/*/edit").hasAnyRole("NOTICE_WRITER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/notices", "/notices/*", "/notices/*/delete").hasAnyRole("NOTICE_WRITER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

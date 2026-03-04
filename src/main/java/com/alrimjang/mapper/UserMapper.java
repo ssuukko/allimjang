@@ -13,5 +13,8 @@ public interface UserMapper {
 
     List<Users> findAllUsers();
 
+    int updateNoticeWritePermission(@Param("userId") String userId,
+                                    @Param("canPostNotice") boolean canPostNotice);
+
     void insertUser(Users users);
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,9 @@
     <section class="c-surface p-4 p-lg-5 c-fade-up">
         <div class="c-page-header">
             <h2>공지사항</h2>
-            <a href="/notices/new" class="btn btn-primary c-btn c-btn-primary">새 공지 작성</a>
+            <a sec:authorize="hasAnyRole('NOTICE_WRITER','ADMIN')"
+               href="/notices/new"
+               class="btn btn-primary c-btn c-btn-primary">새 공지 작성</a>
         </div>
 
         <div th:replace="~{fragments/search :: searchForm('/notices', ${keyword}, ${searchType}, ${pageSize}, '검색어를 입력하세요')}"></div>
@@ -44,7 +46,9 @@
                             th:classappend="${notice.isImportant} ? ' c-notice-row--important' : ''"
                             class="c-notice-row">
                             <td>
-                                <a th:href="@{/notices/{id}(id=${notice.id})}" class="text-decoration-none text-dark">
+                                <a th:href="@{/notices/{id}(id=${notice.id})}"
+                                   class="text-decoration-none"
+                                   th:classappend="${#lists.contains(readNoticeIds, notice.id)} ? ' c-notice-link-read' : ' c-notice-link-unread'">
                                     <span th:if="${notice.isImportant}" class="c-badge-important me-2">중요</span>
                                     <span th:if="${isAdmin and notice.getIsHidden()}" class="badge bg-secondary me-2">숨김</span>
                                     <strong th:text="${notice.title}">공지사항 제목</strong>

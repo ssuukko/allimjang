@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,10 +25,17 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("사용자 없음: " + username);
         }
         String normalizedRole = normalizeRole(user.getRole());
+
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(normalizedRole));
+        if (Boolean.TRUE.equals(user.getCanPostNotice())) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_NOTICE_WRITER"));
+        }
+
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .authorities(List.of(new SimpleGrantedAuthority(normalizedRole)))
+                .authorities(authorities)
                 .disabled(!Boolean.TRUE.equals(user.getEnabled()))
                 .build();
     }

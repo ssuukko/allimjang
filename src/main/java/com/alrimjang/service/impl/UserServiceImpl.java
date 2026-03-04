@@ -38,6 +38,7 @@ public class UserServiceImpl implements UserService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role("USER")
                 .enabled(true)
+                .canPostNotice(false)
                 .build();
 
         userMapper.insertUser(user);

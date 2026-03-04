@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ko">
 <body>
 <link rel="stylesheet" th:href="@{/css/style.css}">
 
@@ -39,7 +39,7 @@
                                 <div class="c-notice-preview-empty">불러오는 중...</div>
                             </div>
                             <div class="c-notice-preview-footer">
-                                <a href="/api/users/me/receipts" class="small text-decoration-none">전체 알림(JSON)</a>
+                                <a href="/notices" class="small text-decoration-none">전체 공지 보기</a>
                             </div>
                         </div>
                     </div>
@@ -84,8 +84,6 @@
             const list = document.getElementById('noticePreviewList');
             if (!button || !list) return;
 
-            let loaded = false;
-
             const escapeHtml = function (value) {
                 return String(value || '')
                     .replace(/&/g, '&amp;')
@@ -114,11 +112,16 @@
                     const unread = !item.readAt ? '<span class="c-notice-preview-unread">안읽음</span>' : '';
                     const title = escapeHtml(item.noticeTitle || '(제목 없음)');
                     const deliveredAt = formatDate(item.deliveredAt);
+                    const noticeId = item.noticeId ? encodeURIComponent(item.noticeId) : '';
+                    const href = noticeId ? '/notices/' + noticeId : '#';
+                    const linkClass = noticeId ? 'c-notice-preview-link' : 'c-notice-preview-link disabled';
                     return ''
-                        + '<div class="c-notice-preview-item">'
-                        +   '<p class="c-notice-preview-title">' + title + '</p>'
-                        +   '<div class="c-notice-preview-meta">' + unread + deliveredAt + '</div>'
-                        + '</div>';
+                        + '<a class="' + linkClass + '" href="' + href + '">'
+                        +   '<div class="c-notice-preview-item">'
+                        +     '<p class="c-notice-preview-title">' + title + '</p>'
+                        +     '<div class="c-notice-preview-meta">' + unread + deliveredAt + '</div>'
+                        +   '</div>'
+                        + '</a>';
                 }).join('');
                 list.innerHTML = html;
             };
@@ -128,7 +131,6 @@
             };
 
             button.addEventListener('show.bs.dropdown', function () {
-                if (loaded) return;
                 fetch('/api/users/me/receipts?unreadOnly=false', {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
@@ -139,7 +141,6 @@
                     })
                     .then(data => {
                         renderItems(data);
-                        loaded = true;
                     })
                     .catch(() => renderError());
             });
