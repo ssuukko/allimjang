@@ -10,13 +10,13 @@ import com.alrimjang.service.NoticeAudienceService;
 import com.alrimjang.service.NoticeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -27,6 +27,8 @@ public class NoticeController {
     private final NoticeAudienceService noticeAudienceService;
     private final UserMapper userMapper;
     private final GroupMapper groupMapper;
+    @Value("${app.notice.available-roles}")
+    private List<String> availableRoles;
 
     private boolean isAdmin(Authentication authentication) {
         if (authentication == null) {
@@ -101,7 +103,7 @@ public class NoticeController {
     public String showNoticeForm(Model model) {
 
         model.addAttribute("notice", new Notice());
-        model.addAttribute("availableRoles", Arrays.asList("ROLE_USER", "ROLE_ADMIN"));
+        model.addAttribute("availableRoles", availableRoles);
         model.addAttribute("availableGroups", groupMapper.findAll());
 
         return "notices/form";
@@ -118,7 +120,7 @@ public class NoticeController {
 
         model.addAttribute("notice", notice);
         model.addAttribute("idEdit", true);
-        model.addAttribute("availableRoles", Arrays.asList("ROLE_USER", "ROLE_ADMIN"));
+        model.addAttribute("availableRoles", availableRoles);
         model.addAttribute("availableGroups", groupMapper.findAll());
 
         return "notices/form";

@@ -5,58 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 - 알림장</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-light">
-<div class="container">
-    <div class="row justify-content-center mt-5">
-        <div class="col-md-5">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h3 class="card-title text-center mb-4">회원가입</h3>
-
-                    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-
-                    <form th:action="@{/register}" th:object="${registerRequest}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-                        <div class="mb-3">
-                            <label for="username" class="form-label">아이디</label>
-                            <input type="text" class="form-control" id="username" th:field="*{username}" required>
-                            <div class="text-danger small" th:if="${#fields.hasErrors('username')}"
-                                 th:errors="*{username}"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="name" class="form-label">이름</label>
-                            <input type="text" class="form-control" id="name" th:field="*{name}" required>
-                            <div class="text-danger small" th:if="${#fields.hasErrors('name')}"
-                                 th:errors="*{name}"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="password" class="form-label">비밀번호</label>
-                            <input type="password" class="form-control" id="password" th:field="*{password}" required>
-                            <div class="text-danger small" th:if="${#fields.hasErrors('password')}"
-                                 th:errors="*{password}"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">비밀번호 확인</label>
-                            <input type="password" class="form-control" id="confirmPassword"
-                                   th:field="*{confirmPassword}" required>
-                            <div class="text-danger small" th:if="${#fields.hasErrors('confirmPassword')}"
-                                 th:errors="*{confirmPassword}"></div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">가입하기</button>
-                    </form>
-
-                    <div class="mt-3 text-center">
-                        <a href="/login">로그인으로 돌아가기</a>
-                    </div>
-                </div>
+<body>
+<div class="c-login-shell">
+    <div class="c-auth-panel c-fade-up">
+        <section class="c-auth-side d-flex flex-column justify-content-between">
+            <div>
+                <span class="c-pill-brand">ALRIMJANG</span>
+                <h2 class="mt-3 mb-3">조직 공지 운영을 위한 통합 계정 생성</h2>
+                <p class="mb-0" style="color: rgba(247, 240, 225, 0.86);">
+                    역할 기반 권한과 공지 전달 흐름을 하나의 계정으로 연결합니다.
+                </p>
             </div>
-        </div>
+            <small style="color: rgba(247, 240, 225, 0.72);">필수 항목을 정확히 입력해 주세요.</small>
+        </section>
+
+        <section class="c-auth-form">
+            <h3 class="c-section-title">회원가입</h3>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+            <form th:action="@{/register}" th:object="${registerRequest}" method="post" class="mt-3">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="mb-3">
+                    <label for="username" class="form-label c-form-label">아이디</label>
+                    <input type="text" class="form-control c-input" id="username" th:field="*{username}" required>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label c-form-label">이름</label>
+                    <input type="text" class="form-control c-input" id="name" th:field="*{name}" required>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label c-form-label">비밀번호</label>
+                    <input type="password" class="form-control c-input" id="password" th:field="*{password}" required>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label c-form-label">비밀번호 확인</label>
+                    <input type="password" class="form-control c-input" id="confirmPassword" th:field="*{confirmPassword}" required>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary c-btn c-btn-primary w-100 mt-2">가입하기</button>
+            </form>
+
+            <div class="mt-3 text-center">
+                <a href="/login" class="text-decoration-none">로그인으로 돌아가기</a>
+            </div>
+        </section>
     </div>
 </div>
 </body>
