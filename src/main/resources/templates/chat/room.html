@@ -12,36 +12,76 @@
 <div th:replace="~{fragments/layout :: memberPanel}"></div>
 
 <main class="container c-main flex-grow-1">
-    <section class="c-surface p-4 p-lg-5">
-        <div class="c-page-header">
-            <h2 id="chatTitle">채팅</h2>
-            <div class="d-flex align-items-center gap-2">
-                <span id="roomBadge" class="c-pill-brand">Room: general</span>
-                <span id="unreadBadge" class="badge text-bg-warning">안읽음 0</span>
-            </div>
-        </div>
+    <section class="c-surface c-chat-shell p-3 p-lg-4">
+        <div class="c-chat-grid">
+            <aside class="c-chat-side">
+                <div class="c-chat-side-card">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                        <h2 id="chatTitle" class="c-chat-title mb-0">채팅</h2>
+                        <span id="roomBadge" class="c-pill-brand">Room: general</span>
+                    </div>
+                    <div class="small text-muted mb-3">채팅방 이동 및 개인 할 일 지정</div>
 
-        <div class="row g-2 mb-3">
-            <div class="col-md-4">
-                <select id="roomSelect" class="form-select c-select">
-                    <option value="general">general</option>
-                    <option value="class-1">class-1</option>
-                    <option value="teachers">teachers</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <input id="customRoomInput" class="form-control c-input" placeholder="직접 roomId 입력 (예: grade3-2)">
-            </div>
-            <div class="col-md-2 d-grid">
-                <button id="joinRoomBtn" class="btn c-btn c-btn-outline">방 이동</button>
-            </div>
-        </div>
+                    <div class="mb-2">
+                        <label for="roomSelect" class="form-label c-form-label mb-1">빠른 방 선택</label>
+                        <select id="roomSelect" class="form-select c-select">
+                            <option value="general">general</option>
+                            <option value="class-1">class-1</option>
+                            <option value="teachers">teachers</option>
+                        </select>
+                    </div>
 
-        <div id="chatBox" class="border rounded-4 p-3 mb-3 bg-white" style="height: 460px; overflow-y: auto;"></div>
+                    <div class="mb-2">
+                        <label for="customRoomInput" class="form-label c-form-label mb-1">직접 roomId</label>
+                        <input id="customRoomInput" class="form-control c-input" placeholder="예: grade3-2">
+                    </div>
 
-        <div class="d-flex gap-2">
-            <input id="msgInput" class="form-control c-input" placeholder="메시지를 입력하세요">
-            <button id="sendBtn" class="btn btn-primary c-btn c-btn-primary">전송</button>
+                    <button id="joinRoomBtn" class="btn c-btn c-btn-outline w-100">방 이동</button>
+                </div>
+
+                <section id="taskPanel" class="c-chat-side-card c-task-panel d-none mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">개인 할 일</h5>
+                        <small class="text-muted">실시간 D-day</small>
+                    </div>
+
+                    <div id="taskError" class="alert alert-danger py-2 px-3 d-none" role="alert"></div>
+
+                    <form id="taskForm" class="row g-2 align-items-end mb-3">
+                        <div class="col-12">
+                            <label for="taskTitle" class="form-label mb-1">할 일</label>
+                            <input id="taskTitle" class="form-control c-input" maxlength="120" placeholder="예: 보고서 1차안 공유" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="taskDeadline" class="form-label mb-1">마감일시</label>
+                            <input id="taskDeadline" type="datetime-local" class="form-control c-input" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="taskAssignee" class="form-label mb-1">담당자</label>
+                            <input id="taskAssignee" class="form-control c-input" readonly>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-primary c-btn c-btn-primary">할 일 지정</button>
+                        </div>
+                    </form>
+
+                    <div id="taskList" class="d-flex flex-column gap-2"></div>
+                </section>
+            </aside>
+
+            <article class="c-chat-main">
+                <div class="c-chat-main-head">
+                    <div class="small text-muted">대화</div>
+                    <span id="unreadBadge" class="badge text-bg-warning">안읽음 0</span>
+                </div>
+
+                <div id="chatBox" class="c-chat-stream"></div>
+
+                <div class="c-chat-compose">
+                    <input id="msgInput" class="form-control c-input" placeholder="메시지를 입력하세요">
+                    <button id="sendBtn" class="btn btn-primary c-btn c-btn-primary">전송</button>
+                </div>
+            </article>
         </div>
     </section>
 </main>
@@ -65,8 +105,23 @@
     const sendBtn = document.getElementById("sendBtn");
     const unreadBadge = document.getElementById("unreadBadge");
 
+    const taskPanel = document.getElementById("taskPanel");
+    const taskForm = document.getElementById("taskForm");
+    const taskTitleInput = document.getElementById("taskTitle");
+    const taskDeadlineInput = document.getElementById("taskDeadline");
+    const taskAssigneeInput = document.getElementById("taskAssignee");
+    const taskError = document.getElementById("taskError");
+    const taskList = document.getElementById("taskList");
+
     let stompClient = null;
     let subscription = null;
+
+    let taskItems = [];
+    let taskDetailCollapsed = {};
+    let countdownTimer = null;
+    let taskRefreshTimer = null;
+    let serverOffsetMs = 0;
+    let currentUsername = "";
 
     function escapeHtml(value) {
         return String(value)
@@ -77,13 +132,34 @@
             .replace(/'/g, "&#39;");
     }
 
+    function isDirectRoom() {
+        return roomId.startsWith("dm__") && !!partner;
+    }
+
+    function normalizeDateTimeLocal(date) {
+        const d = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+        return d.toISOString().slice(0, 16);
+    }
+
     function applyRoomLabel() {
         if (partner) {
             chatTitle.textContent = "채팅 - @" + partner;
+        } else {
+            chatTitle.textContent = "채팅";
         }
         roomBadge.textContent = "Room: " + roomId;
         customRoomInput.value = roomId;
         roomSelect.value = ["general", "class-1", "teachers"].includes(roomId) ? roomId : "general";
+
+        const dm = isDirectRoom();
+        taskPanel.classList.toggle("d-none", !dm);
+        if (dm) {
+            taskAssigneeInput.value = partner;
+            if (!taskDeadlineInput.value) {
+                const nextHour = new Date(Date.now() + (60 * 60 * 1000));
+                taskDeadlineInput.value = normalizeDateTimeLocal(nextHour);
+            }
+        }
     }
 
     function applyUnreadBadge(count) {
@@ -93,8 +169,13 @@
 
     function appendMessage(m) {
         const item = document.createElement("div");
-        item.className = "mb-2";
-        item.innerHTML = "<strong>" + escapeHtml(m.senderName) + "</strong>: " + escapeHtml(m.content);
+        item.className = "c-chat-msg";
+        item.innerHTML = "" +
+            "<div class=\"c-chat-msg__head\">" +
+            "<strong class=\"c-chat-msg__sender\">" + escapeHtml(m.senderName) + "</strong>" +
+            "<span class=\"c-chat-msg__time\">" + escapeHtml(formatDateTime(m.createdAt)) + "</span>" +
+            "</div>" +
+            "<div class=\"c-chat-msg__body\">" + escapeHtml(m.content) + "</div>";
         chatBox.appendChild(item);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
@@ -103,12 +184,15 @@
         chatBox.innerHTML = "";
         fetch("/api/chat/rooms/" + encodeURIComponent(roomId) + "/messages")
             .then(res => res.json())
-            .then(list => list.forEach(appendMessage))
+            .then(list => {
+                if (!Array.isArray(list) || list.length === 0) {
+                    chatBox.innerHTML = '<div class="c-chat-empty">아직 메시지가 없습니다.</div>';
+                    return;
+                }
+                list.forEach(appendMessage);
+            })
             .catch(() => {
-                const item = document.createElement("div");
-                item.className = "text-danger";
-                item.textContent = "메시지 불러오기에 실패했습니다.";
-                chatBox.appendChild(item);
+                chatBox.innerHTML = '<div class="c-chat-empty c-chat-empty--error">메시지 불러오기에 실패했습니다.</div>';
             });
     }
 
@@ -118,6 +202,10 @@
             subscription.unsubscribe();
         }
         subscription = stompClient.subscribe("/topic/chat." + roomId, function (frame) {
+            const existedEmpty = chatBox.querySelector('.c-chat-empty');
+            if (existedEmpty) {
+                chatBox.innerHTML = '';
+            }
             appendMessage(JSON.parse(frame.body));
             refreshUnreadCount();
         });
@@ -135,17 +223,20 @@
         const cleaned = (nextRoomId || "").trim();
         if (!cleaned) return;
         roomId = cleaned;
+        taskDetailCollapsed = {};
 
         const url = new URL(window.location.href);
         url.searchParams.set("room", roomId);
         url.searchParams.delete("partner");
         window.history.replaceState({}, "", url);
 
+        stopTaskTimers();
         applyRoomLabel();
         loadHistory();
         subscribeRoom();
         markAsRead();
         refreshUnreadCount();
+        refreshTasks();
     }
 
     function sendMessage() {
@@ -173,6 +264,308 @@
             .catch(() => {});
     }
 
+    function showTaskError(message) {
+        if (!taskError) return;
+        taskError.textContent = message;
+        taskError.classList.remove("d-none");
+    }
+
+    function hideTaskError() {
+        if (!taskError) return;
+        taskError.textContent = "";
+        taskError.classList.add("d-none");
+    }
+
+    function formatDateTime(value) {
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) {
+            return value || "";
+        }
+        return d.toLocaleString();
+    }
+
+    function calcDday(deadline, now) {
+        const oneDay = 24 * 60 * 60 * 1000;
+        const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const deadlineDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate()).getTime();
+        const diff = Math.round((deadlineDate - nowDate) / oneDay);
+
+        if (diff > 0) return "D-" + diff;
+        if (diff === 0) return "D-Day";
+        return "D+" + Math.abs(diff);
+    }
+
+    function formatDuration(ms) {
+        const totalSeconds = Math.floor(Math.abs(ms) / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        const hh = String(hours).padStart(2, "0");
+        const mm = String(minutes).padStart(2, "0");
+        const ss = String(seconds).padStart(2, "0");
+
+        if (days > 0) {
+            return days + "일 " + hh + ":" + mm + ":" + ss;
+        }
+        return hh + ":" + mm + ":" + ss;
+    }
+
+    function renderTasks() {
+        if (!taskList) return;
+        if (!taskItems.length) {
+            taskList.innerHTML = '<div class="c-task-empty">등록된 할 일이 없습니다.</div>';
+            return;
+        }
+
+        const rows = taskItems.map(task => {
+            const pending = task.status === "PENDING";
+            const done = task.status === "DONE";
+            const confirmed = task.status === "CONFIRMED";
+            const collapsed = !!taskDetailCollapsed[task.id];
+            const toggleText = collapsed ? '펼치기' : '접기';
+            const isAssignee = currentUsername && currentUsername === task.assigneeUsername;
+            const isCreator = currentUsername && currentUsername === task.createdByUsername;
+            const description = task.description ? '<div class="small text-muted mt-1">' + escapeHtml(task.description) + '</div>' : '';
+            let statusText = '진행중';
+            if (done) {
+                statusText = '담당자 완료';
+            } else if (confirmed) {
+                statusText = '최종 확인 완료';
+            }
+            let statusBadgeClass = 'c-task-status--pending';
+            if (done) {
+                statusBadgeClass = 'c-task-status--done';
+            } else if (confirmed) {
+                statusBadgeClass = 'c-task-status--confirmed';
+            }
+            const countdownHtml = pending
+                ? '<div class="c-task-countdown"><div class="small fw-semibold task-dday">-</div><div class="small text-muted task-remaining">-</div></div>'
+                : '';
+            let actionHtml = '<span class="badge text-bg-secondary">진행중</span>';
+            if (pending && isAssignee) {
+                actionHtml = '<button class="btn btn-sm btn-outline-success complete-task-btn c-task-action-btn" data-task-id="' + escapeHtml(task.id) + '">완료</button>';
+            } else if (done && isCreator) {
+                actionHtml = '<button class="btn btn-sm btn-outline-primary confirm-task-btn c-task-action-btn" data-task-id="' + escapeHtml(task.id) + '">확인</button>';
+            } else if (done) {
+                actionHtml = '<span class="badge text-bg-warning">확인 대기</span>';
+            } else if (confirmed) {
+                actionHtml = '<span class="badge text-bg-success">확인 완료</span>';
+            }
+
+            return ''
+                + '<div class="c-task-item" data-task-id="' + escapeHtml(task.id) + '" data-deadline="' + escapeHtml(task.deadlineAt) + '" data-status="' + escapeHtml(task.status) + '">'
+                +   '<div class="d-flex justify-content-between align-items-start gap-2">'
+                +     '<div class="c-task-title">' + escapeHtml(task.title) + '</div>'
+                +     '<button type="button" class="btn btn-sm c-btn c-btn-outline task-detail-toggle-btn c-task-toggle-btn" data-task-id="' + escapeHtml(task.id) + '">' + toggleText + '</button>'
+                +   '</div>'
+                +   '<div class="task-detail ' + (collapsed ? 'd-none' : '') + ' mt-2">' +
+                '<div class="c-task-kv"><span class="c-task-k">담당</span><span class="c-task-v">' + escapeHtml(task.assigneeName) + ' (@' + escapeHtml(task.assigneeUsername) + ')</span></div>' +
+                '<div class="c-task-kv"><span class="c-task-k">마감</span><span class="c-task-v">' + escapeHtml(formatDateTime(task.deadlineAt)) + '</span></div>' +
+                '<div class="c-task-kv"><span class="c-task-k">상태</span><span class="c-task-v"><span class="c-task-status ' + statusBadgeClass + '">' + statusText + '</span></span></div>' +
+                description +
+                '<div class="text-end c-task-meta mt-2">' +
+                countdownHtml +
+                '<div class="mt-2">' + actionHtml + '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        });
+
+        taskList.innerHTML = rows.join('');
+
+        taskList.querySelectorAll('.complete-task-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                completeTask(btn.getAttribute('data-task-id'));
+            });
+        });
+        taskList.querySelectorAll('.task-detail-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const taskId = btn.getAttribute('data-task-id');
+                if (!taskId) return;
+                taskDetailCollapsed[taskId] = !taskDetailCollapsed[taskId];
+                renderTasks();
+            });
+        });
+        taskList.querySelectorAll('.confirm-task-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                confirmTask(btn.getAttribute('data-task-id'));
+            });
+        });
+
+        updateTaskCountdowns();
+    }
+
+    function updateTaskCountdowns() {
+        if (!taskList) return;
+        const now = new Date(Date.now() + serverOffsetMs);
+
+        taskList.querySelectorAll('[data-task-id]').forEach(card => {
+            const status = card.getAttribute('data-status');
+            const ddayNode = card.querySelector('.task-dday');
+            const remainNode = card.querySelector('.task-remaining');
+            if (!ddayNode || !remainNode) {
+                return;
+            }
+
+            if (status !== 'PENDING') {
+                ddayNode.textContent = '-';
+                remainNode.textContent = '-';
+                return;
+            }
+
+            const deadlineValue = card.getAttribute('data-deadline');
+            const deadline = new Date(deadlineValue);
+            if (Number.isNaN(deadline.getTime())) {
+                ddayNode.textContent = '-';
+                remainNode.textContent = '마감일 형식 오류';
+                return;
+            }
+
+            const diffMs = deadline.getTime() - now.getTime();
+            ddayNode.textContent = calcDday(deadline, now);
+            remainNode.textContent = diffMs >= 0
+                ? '남은 시간 ' + formatDuration(diffMs)
+                : '마감 초과 ' + formatDuration(diffMs);
+        });
+    }
+
+    function stopTaskTimers() {
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
+        if (taskRefreshTimer) {
+            clearInterval(taskRefreshTimer);
+            taskRefreshTimer = null;
+        }
+    }
+
+    function startTaskTimers() {
+        stopTaskTimers();
+        countdownTimer = setInterval(updateTaskCountdowns, 1000);
+        taskRefreshTimer = setInterval(refreshTasks, 30000);
+    }
+
+    function refreshTasks() {
+        if (!taskList) return;
+        if (!isDirectRoom()) {
+            taskItems = [];
+            taskDetailCollapsed = {};
+            taskList.innerHTML = '';
+            hideTaskError();
+            stopTaskTimers();
+            return;
+        }
+
+        fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/tasks')
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('할 일 목록을 불러오지 못했습니다.');
+                }
+                return res.json();
+            })
+            .then(data => {
+                serverOffsetMs = new Date(data.serverNow).getTime() - Date.now();
+                currentUsername = data.currentUsername || "";
+                taskItems = Array.isArray(data.tasks) ? data.tasks : [];
+                renderTasks();
+                startTaskTimers();
+                hideTaskError();
+            })
+            .catch(err => {
+                showTaskError(err.message);
+            });
+    }
+
+    function createTask(event) {
+        event.preventDefault();
+        hideTaskError();
+
+        const title = taskTitleInput.value.trim();
+        const deadline = taskDeadlineInput.value;
+        const assigneeUsername = (taskAssigneeInput.value || '').trim();
+
+        if (!title || !deadline || !assigneeUsername) {
+            showTaskError('할 일, 마감일시, 담당자를 모두 입력해 주세요.');
+            return;
+        }
+
+        fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title,
+                deadlineAt: deadline,
+                assigneeUsername: assigneeUsername
+            })
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('할 일 지정에 실패했습니다.');
+                }
+                return res.json();
+            })
+            .then(() => {
+                taskTitleInput.value = '';
+                const nextHour = new Date(Date.now() + (60 * 60 * 1000));
+                taskDeadlineInput.value = normalizeDateTimeLocal(nextHour);
+                refreshTasks();
+            })
+            .catch(err => {
+                showTaskError(err.message);
+            });
+    }
+
+    function completeTask(taskId) {
+        hideTaskError();
+        const ok = window.confirm('이 할 일을 완료 처리하시겠습니까?');
+        if (!ok) {
+            return;
+        }
+
+        fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/tasks/' + encodeURIComponent(taskId) + '/complete', {
+            method: 'POST'
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('완료 처리에 실패했습니다.');
+                }
+                alert('완료 처리되었습니다. 할 일을 지정한 사람이 확인 버튼으로 최종 확인할 수 있습니다.');
+                refreshTasks();
+            })
+            .catch(err => {
+                showTaskError(err.message);
+            });
+    }
+
+    function confirmTask(taskId) {
+        hideTaskError();
+        const ok = window.confirm('상대가 완료한 과제를 확인 처리하시겠습니까?');
+        if (!ok) {
+            return;
+        }
+
+        fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/tasks/' + encodeURIComponent(taskId) + '/confirm', {
+            method: 'POST'
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('확인 처리에 실패했습니다.');
+                }
+                alert('과제 확인이 완료되었습니다.');
+                refreshTasks();
+            })
+            .catch(err => {
+                showTaskError(err.message);
+            });
+    }
+
     roomSelect.addEventListener("change", function () {
         moveRoom(roomSelect.value);
     });
@@ -186,9 +579,14 @@
         if (e.key === "Enter") sendMessage();
     });
 
+    if (taskForm) {
+        taskForm.addEventListener('submit', createTask);
+    }
+
     window.addEventListener("focus", function () {
         markAsRead();
         refreshUnreadCount();
+        refreshTasks();
     });
 
     applyRoomLabel();
@@ -196,6 +594,7 @@
     connectSocket();
     markAsRead();
     refreshUnreadCount();
+    refreshTasks();
 </script>
 </body>
 </html>

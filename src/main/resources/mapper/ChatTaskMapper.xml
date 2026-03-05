@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alrimjang.mapper.ChatTaskMapper">
+
+    <insert id="insert" parameterType="com.alrimjang.model.entity.ChatTask">
+        INSERT INTO chat_tasks (
+            id, room_id, title, description, deadline_at, status,
+            created_by_user_id, created_by_username, created_by_name,
+            assignee_user_id, assignee_username, assignee_name,
+            created_at, completed_at, confirmed_at
+        )
+        VALUES (
+            #{id}, #{roomId}, #{title}, #{description}, #{deadlineAt}, #{status},
+            #{createdByUserId}, #{createdByUsername}, #{createdByName},
+            #{assigneeUserId}, #{assigneeUsername}, #{assigneeName},
+            #{createdAt}, #{completedAt}, #{confirmedAt}
+        )
+    </insert>
+
+    <select id="findByRoomId" resultType="com.alrimjang.model.entity.ChatTask">
+        SELECT id, room_id, title, description, deadline_at, status,
+               created_by_user_id, created_by_username, created_by_name,
+               assignee_user_id, assignee_username, assignee_name,
+               created_at, completed_at, confirmed_at
+        FROM chat_tasks
+        WHERE room_id = #{roomId}
+        ORDER BY
+            CASE WHEN status = 'PENDING' THEN 0 ELSE 1 END,
+            deadline_at ASC,
+            created_at DESC
+    </select>
+
+    <select id="findByIdAndRoomId" resultType="com.alrimjang.model.entity.ChatTask">
+        SELECT id, room_id, title, description, deadline_at, status,
+               created_by_user_id, created_by_username, created_by_name,
+               assignee_user_id, assignee_username, assignee_name,
+               created_at, completed_at, confirmed_at
+        FROM chat_tasks
+        WHERE id = #{taskId}
+          AND room_id = #{roomId}
+    </select>
+
+    <update id="markDone">
+        UPDATE chat_tasks
+        SET status = 'DONE',
+            completed_at = #{completedAt}
+        WHERE id = #{taskId}
+          AND room_id = #{roomId}
+          AND status = 'PENDING'
+    </update>
+
+    <update id="markConfirmed">
+        UPDATE chat_tasks
+        SET status = 'CONFIRMED',
+            confirmed_at = #{confirmedAt}
+        WHERE id = #{taskId}
+          AND room_id = #{roomId}
+          AND status = 'DONE'
+    </update>
+</mapper>

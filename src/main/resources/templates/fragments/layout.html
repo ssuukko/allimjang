@@ -249,6 +249,16 @@
                 showMenu(e.clientX, e.clientY, item.dataset.username);
             });
 
+            list.addEventListener('dblclick', function (e) {
+                const item = e.target.closest('.c-member-item');
+                if (!item) return;
+                if (item.dataset.me === 'true') return;
+                const rect = item.getBoundingClientRect();
+                const x = Math.min(rect.right - 10, window.innerWidth - 12);
+                const y = Math.min(rect.top + 8, window.innerHeight - 12);
+                showMenu(x, y, item.dataset.username);
+            });
+
             list.addEventListener('click', hideMenu);
 
             chatAction.addEventListener('click', function () {
