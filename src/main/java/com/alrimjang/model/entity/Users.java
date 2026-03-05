@@ -18,4 +18,5 @@ public class Users {
     private LocalDateTime createdAt;
     private Boolean enabled;
     private Boolean canPostNotice;
+    private Boolean canPostNotification;
 }

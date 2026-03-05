@@ -767,6 +767,77 @@ a:hover {
     color: #aa4343;
 }
 
+.c-chat-room-item {
+    position: relative;
+    width: 100%;
+    border: 1px solid rgba(24, 44, 70, 0.12);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.96));
+    box-shadow: 0 7px 18px rgba(16, 30, 48, 0.06);
+    padding: 0;
+    transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    overflow: hidden;
+}
+
+.c-chat-room-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(26, 56, 89, 0.28);
+    box-shadow: 0 11px 22px rgba(16, 30, 48, 0.1);
+}
+
+.c-chat-room-search {
+    max-width: 280px;
+}
+
+.c-chat-room-open {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0.78rem 0.9rem;
+}
+
+.c-chat-room-open:hover,
+.c-chat-room-open:focus {
+    background: rgba(18, 31, 49, 0.03);
+    color: inherit;
+}
+
+.c-chat-unread-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.c-chat-pin-btn {
+    min-width: 34px;
+    height: 30px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(24, 44, 70, 0.2);
+    background: rgba(255, 255, 255, 0.92);
+    color: #6c7b90;
+    line-height: 1;
+}
+
+.c-chat-pin-btn:hover {
+    border-color: rgba(24, 44, 70, 0.34);
+    color: #2a4567;
+}
+
+.c-chat-pin-btn.is-pinned {
+    border-color: rgba(204, 150, 44, 0.42);
+    background: rgba(255, 244, 218, 0.92);
+    color: #b37a0b;
+}
+
+.c-chat-pin-btn--inside {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+}
+
 .c-chat-msg {
     border: 1px solid rgba(24, 44, 70, 0.12);
     border-radius: 12px;
@@ -774,6 +845,16 @@ a:hover {
     padding: 0.65rem 0.75rem;
     margin-bottom: 0.55rem;
     box-shadow: 0 4px 12px rgba(14, 27, 45, 0.06);
+    width: fit-content;
+    max-width: 78%;
+    margin-right: auto;
+}
+
+.c-chat-msg--mine {
+    margin-left: auto;
+    margin-right: 0;
+    border-color: rgba(35, 73, 112, 0.22);
+    background: linear-gradient(180deg, rgba(232, 241, 253, 0.95), rgba(243, 248, 255, 0.96));
 }
 
 .c-chat-msg__head {
@@ -782,6 +863,10 @@ a:hover {
     align-items: baseline;
     gap: 0.6rem;
     margin-bottom: 0.25rem;
+}
+
+.c-chat-msg--mine .c-chat-msg__head {
+    justify-content: flex-end;
 }
 
 .c-chat-msg__sender {
@@ -799,6 +884,14 @@ a:hover {
     line-height: 1.45;
     color: #1e2f47;
     word-break: break-word;
+}
+
+.c-chat-msg__read {
+    margin-top: 0.22rem;
+    text-align: right;
+    color: #e29b13;
+    font-size: 0.7rem;
+    font-weight: 700;
 }
 
 .c-chat-compose {
@@ -1037,10 +1130,99 @@ a:hover {
     background: rgba(223, 234, 247, 0.66);
 }
 
+.c-survey-question-item {
+    border-color: rgba(26, 53, 84, 0.16) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 251, 255, 0.96));
+}
+
+.c-survey-question-item .option-list .option-input {
+    min-height: 40px;
+}
+
+.c-survey-question-item .option-list .remove-option-btn {
+    white-space: nowrap;
+}
+
+.c-survey-datetime-row {
+    gap: 0.5rem;
+}
+
+.c-survey-datetime-input {
+    height: 38px;
+    font-size: 0.88rem;
+    padding: 0.45rem 0.65rem;
+}
+
+.c-survey-date-input {
+    width: 146px;
+    min-width: 146px;
+    flex: 0 0 146px;
+}
+
+.c-survey-time-input {
+    width: 128px;
+    min-width: 128px;
+    flex: 0 0 128px;
+}
+
+.c-survey-datetime-btn {
+    padding: 0.36rem 0.75rem;
+    line-height: 1.2;
+}
+
+/* Survey date/time picker sizing */
+.flatpickr-calendar {
+    width: 272px;
+    font-size: 0.82rem;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(16, 30, 48, 0.16);
+}
+
+.flatpickr-calendar .flatpickr-month {
+    height: 42px;
+}
+
+.flatpickr-calendar .flatpickr-current-month {
+    padding-top: 6px;
+    font-size: 0.9rem;
+}
+
+.flatpickr-calendar .flatpickr-weekday {
+    font-size: 0.72rem;
+}
+
+.flatpickr-calendar .flatpickr-day {
+    max-width: 34px;
+    height: 34px;
+    line-height: 34px;
+    font-size: 0.8rem;
+}
+
+.flatpickr-calendar .flatpickr-time {
+    height: 38px;
+}
+
+.flatpickr-calendar .flatpickr-time input.flatpickr-hour,
+.flatpickr-calendar .flatpickr-time input.flatpickr-minute {
+    font-size: 0.84rem;
+}
+
 @media (max-width: 991.98px) {
     .c-admin-nav-card {
         position: static;
         top: auto;
+    }
+
+    .c-survey-date-input {
+        width: 132px;
+        min-width: 132px;
+        flex-basis: 132px;
+    }
+
+    .c-survey-time-input {
+        width: 120px;
+        min-width: 120px;
+        flex-basis: 120px;
     }
 }
 

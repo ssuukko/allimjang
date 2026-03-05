@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 목록 - 알림장</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/layout :: header('chat')}"></div>
+<div th:replace="~{fragments/layout :: memberPanel}"></div>
+
+<main class="container c-main flex-grow-1">
+    <section class="c-surface p-4 p-lg-5 c-fade-up">
+        <div class="c-page-header">
+            <h2>채팅 목록</h2>
+            <a href="/dashboard" class="btn c-btn c-btn-outline">대시보드</a>
+        </div>
+        <p class="c-muted mb-3">최근 대화한 채팅방을 선택해 입장하세요.</p>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <input id="chatRoomSearch" class="form-control c-input c-chat-room-search" placeholder="이름 또는 roomId 검색">
+            <div class="btn-group" role="group" aria-label="정렬">
+                <button type="button" id="sortRecentBtn" class="btn c-btn c-btn-outline btn-sm">최근순</button>
+                <button type="button" id="sortPinnedBtn" class="btn c-btn c-btn-outline btn-sm">고정 우선</button>
+            </div>
+        </div>
+
+        <div id="chatRoomList" class="d-flex flex-column gap-2">
+            <div class="text-muted small">불러오는 중...</div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        const list = document.getElementById('chatRoomList');
+        const searchInput = document.getElementById('chatRoomSearch');
+        const sortRecentBtn = document.getElementById('sortRecentBtn');
+        const sortPinnedBtn = document.getElementById('sortPinnedBtn');
+        if (!list || !searchInput || !sortRecentBtn || !sortPinnedBtn) return;
+
+        const PIN_KEY = 'chatPinnedRooms';
+        let allRooms = [];
+        let sortMode = 'recent';
+        let pinnedRooms = new Set();
+
+        try {
+            const saved = JSON.parse(localStorage.getItem(PIN_KEY) || '[]');
+            if (Array.isArray(saved)) {
+                pinnedRooms = new Set(saved.map(String));
+            }
+        } catch (e) {
+            pinnedRooms = new Set();
+        }
+
+        const escapeHtml = function (value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        const formatDateTime = function (value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleString();
+        };
+
+        const openRoom = function (room) {
+            if (!room || !room.roomId) return;
+            const params = new URLSearchParams();
+            params.set('room', room.roomId);
+            if (room.direct && room.partnerUsername) {
+                params.set('partner', room.partnerUsername);
+            }
+            window.location.href = '/chat/room?' + params.toString();
+        };
+
+        const persistPinned = function () {
+            localStorage.setItem(PIN_KEY, JSON.stringify(Array.from(pinnedRooms)));
+        };
+
+        const getSortableTime = function (room) {
+            const t = room && room.lastMessageAt ? new Date(room.lastMessageAt).getTime() : 0;
+            return Number.isNaN(t) ? 0 : t;
+        };
+
+        const render = function () {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let rows = allRooms.slice();
+
+            if (keyword) {
+                rows = rows.filter(room => {
+                    const title = String(room.roomTitle || '').toLowerCase();
+                    const roomId = String(room.roomId || '').toLowerCase();
+                    const partnerName = String(room.partnerName || '').toLowerCase();
+                    const partnerUsername = String(room.partnerUsername || '').toLowerCase();
+                    return title.includes(keyword)
+                        || roomId.includes(keyword)
+                        || partnerName.includes(keyword)
+                        || partnerUsername.includes(keyword);
+                });
+            }
+
+            rows.sort((a, b) => {
+                const timeDiff = getSortableTime(b) - getSortableTime(a);
+                if (sortMode === 'pinned') {
+                    const ap = pinnedRooms.has(a.roomId) ? 1 : 0;
+                    const bp = pinnedRooms.has(b.roomId) ? 1 : 0;
+                    if (ap !== bp) return bp - ap;
+                }
+                return timeDiff;
+            });
+
+            if (rows.length === 0) {
+                list.innerHTML = '<div class="text-muted small">조건에 맞는 채팅방이 없습니다.</div>';
+                return;
+            }
+
+            list.innerHTML = rows.map(room => {
+                const title = escapeHtml(room.roomTitle || room.roomId);
+                const lastMessage = escapeHtml(room.lastMessage || '(메시지 없음)');
+                const sender = escapeHtml(room.lastSenderName || '-');
+                const at = escapeHtml(formatDateTime(room.lastMessageAt));
+                const unread = Number(room.unreadCount || 0);
+                const unreadBadge = unread > 0 ? '<span class="badge text-bg-warning c-chat-unread-badge">안읽음 ' + unread + '</span>' : '';
+                const pinned = pinnedRooms.has(room.roomId);
+                const pinText = pinned ? '★' : '☆';
+                const pinClass = pinned ? 'is-pinned' : '';
+                return ''
+                    + '<div class="c-chat-room-item" data-room-id="' + escapeHtml(room.roomId) + '">'
+                    +   '<button type="button" class="btn text-start c-chat-room-open">'
+                    +   '<div class="d-flex justify-content-between align-items-start gap-2">'
+                    +     '<div class="pe-5 w-100">'
+                    +       '<div class="fw-semibold">' + title + '</div>'
+                    +       '<div class="small text-muted mt-1">' + sender + ': ' + lastMessage + '</div>'
+                    +       '<div class="small text-muted mt-1 d-flex align-items-center gap-2">'
+                    +         '<span>' + at + '</span>'
+                    +         unreadBadge
+                    +       '</div>'
+                    +     '</div>'
+                    +   '</div>'
+                    +   '</button>'
+                    +   '<button type="button" class="btn btn-sm c-chat-pin-btn c-chat-pin-btn--inside ' + pinClass + '" data-pin-room-id="' + escapeHtml(room.roomId) + '" title="고정">' + pinText + '</button>'
+                    + '</div>';
+            }).join('');
+
+            const roomMap = new Map(rows.map(r => [r.roomId, r]));
+            list.querySelectorAll('.c-chat-room-item .c-chat-room-open').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const card = btn.closest('.c-chat-room-item');
+                    if (!card) return;
+                    openRoom(roomMap.get(card.getAttribute('data-room-id')));
+                });
+            });
+            list.querySelectorAll('.c-chat-pin-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const roomId = btn.getAttribute('data-pin-room-id');
+                    if (!roomId) return;
+                    if (pinnedRooms.has(roomId)) {
+                        pinnedRooms.delete(roomId);
+                    } else {
+                        pinnedRooms.add(roomId);
+                    }
+                    persistPinned();
+                    render();
+                });
+            });
+
+            sortRecentBtn.classList.toggle('active', sortMode === 'recent');
+            sortPinnedBtn.classList.toggle('active', sortMode === 'pinned');
+        };
+
+        fetch('/api/chat/rooms')
+            .then(res => {
+                if (!res.ok) throw new Error('failed');
+                return res.json();
+            })
+            .then(rooms => {
+                if (!Array.isArray(rooms) || rooms.length === 0) {
+                    list.innerHTML = '<div class="text-muted small">아직 대화한 채팅방이 없습니다. 회원 목록에서 채팅을 시작해 주세요.</div>';
+                    return;
+                }
+                allRooms = rooms.slice();
+                render();
+            })
+            .catch(() => {
+                list.innerHTML = '<div class="text-danger small">채팅 목록을 불러오지 못했습니다.</div>';
+            });
+
+        searchInput.addEventListener('input', render);
+        sortRecentBtn.addEventListener('click', function () {
+            sortMode = 'recent';
+            render();
+        });
+        sortPinnedBtn.addEventListener('click', function () {
+            sortMode = 'pinned';
+            render();
+        });
+    })();
+</script>
+</body>
+</html>

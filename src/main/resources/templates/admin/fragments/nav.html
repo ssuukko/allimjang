@@ -11,20 +11,30 @@
                    th:classappend="${active == 'home'} ? ' active' : ''">
                     관리자 홈
                 </a>
-                <a href="/admin/noticewriters"
-                   class="list-group-item list-group-item-action c-admin-nav-item"
-                   th:classappend="${active == 'noticewriters'} ? ' active' : ''">
-                    공지 작성 권한
-                </a>
                 <a href="/admin/notifications/new"
                    class="list-group-item list-group-item-action c-admin-nav-item"
                    th:classappend="${active == 'notifications'} ? ' active' : ''">
                     알림 작성
                 </a>
+                <a href="/admin/surveys/new"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
+                   th:classappend="${active == 'surveys'} ? ' active' : ''">
+                    설문 작성
+                </a>
+                <a href="/admin/surveys/results"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
+                   th:classappend="${active == 'surveyresults'} ? ' active' : ''">
+                    설문 결과
+                </a>
                 <a href="/admin/users"
                    class="list-group-item list-group-item-action c-admin-nav-item"
                    th:classappend="${active == 'users'} ? ' active' : ''">
                     회원 관리
+                </a>
+                <a href="/admin/noticewriters"
+                   class="list-group-item list-group-item-action c-admin-nav-item"
+                   th:classappend="${active == 'permissions'} ? ' active' : ''">
+                    권한 관리
                 </a>
             </div>
         </div>

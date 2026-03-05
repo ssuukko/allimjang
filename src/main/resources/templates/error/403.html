@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>접근 권한 없음 - 알림장</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/layout :: header('dashboard')}"></div>
+
+<main class="container c-main flex-grow-1 d-flex align-items-center justify-content-center">
+    <section class="c-surface p-4 p-lg-5 text-center" style="max-width: 680px; width: 100%;">
+        <h2 class="mb-2">접근 권한이 없습니다</h2>
+        <p class="c-muted mb-4">
+            현재 계정은 관리자 페이지에 접근할 수 없습니다.<br>
+            필요한 경우 관리자에게 권한을 요청해 주세요.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <a href="/dashboard" class="btn c-btn c-btn-outline">대시보드로 이동</a>
+            <a href="/notices" class="btn btn-primary c-btn c-btn-primary">공지사항으로 이동</a>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

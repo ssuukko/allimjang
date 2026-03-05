@@ -10,4 +10,11 @@
         DO UPDATE SET last_read_at = EXCLUDED.last_read_at
     </insert>
 
+    <select id="findLastReadAt" resultType="java.time.LocalDateTime">
+        SELECT last_read_at
+        FROM chat_room_reads
+        WHERE room_id = #{roomId}
+          AND user_id = #{userId}
+    </select>
+
 </mapper>

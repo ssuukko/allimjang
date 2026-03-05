@@ -15,6 +15,8 @@ public interface UserMapper {
 
     int updateNoticeWritePermission(@Param("userId") String userId,
                                     @Param("canPostNotice") boolean canPostNotice);
+    int updateNotificationWritePermission(@Param("userId") String userId,
+                                          @Param("canPostNotification") boolean canPostNotification);
 
     void insertUser(Users users);
 }

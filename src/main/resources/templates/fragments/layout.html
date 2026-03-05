@@ -270,7 +270,7 @@
                         return res.json();
                     })
                     .then(data => {
-                        const url = '/chat?room=' + encodeURIComponent(data.roomId) + '&partner=' + encodeURIComponent(data.targetUsername);
+                        const url = '/chat/room?room=' + encodeURIComponent(data.roomId) + '&partner=' + encodeURIComponent(data.targetUsername);
                         window.location.href = url;
                     })
                     .catch(() => {

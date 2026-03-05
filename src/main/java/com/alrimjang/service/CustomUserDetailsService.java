@@ -31,6 +31,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (Boolean.TRUE.equals(user.getCanPostNotice())) {
             authorities.add(new SimpleGrantedAuthority("ROLE_NOTICE_WRITER"));
         }
+        if (Boolean.TRUE.equals(user.getCanPostNotification())) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_NOTIFICATION_WRITER"));
+        }
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())

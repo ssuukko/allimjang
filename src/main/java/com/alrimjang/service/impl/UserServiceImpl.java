@@ -39,6 +39,7 @@ public class UserServiceImpl implements UserService {
                 .role("USER")
                 .enabled(true)
                 .canPostNotice(false)
+                .canPostNotification(false)
                 .build();
 
         userMapper.insertUser(user);

@@ -54,6 +54,11 @@ public class HomeController {
         return "dashboard";
     }
 
+    @GetMapping("/access-denied")
+    public String accessDenied() {
+        return "error/403";
+    }
+
     /**
      * 서버 정보 API
      */

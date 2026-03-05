@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alrimjang.mapper.SurveyMapper">
+
+    <insert id="insertSurvey" parameterType="com.alrimjang.model.entity.Survey">
+        INSERT INTO surveys (
+            id, title, description, status, start_at, end_at,
+            created_by_user_id, created_by_username, created_by_name, created_at
+        )
+        VALUES (
+            #{id}, #{title}, #{description}, #{status}, #{startAt}, #{endAt},
+            #{createdByUserId}, #{createdByUsername}, #{createdByName}, #{createdAt}
+        )
+    </insert>
+
+    <insert id="insertQuestion" parameterType="com.alrimjang.model.entity.SurveyQuestion">
+        INSERT INTO survey_questions (id, survey_id, seq, type, title, is_required, created_at)
+        VALUES (#{id}, #{surveyId}, #{seq}, #{type}, #{title}, #{isRequired}, #{createdAt})
+    </insert>
+
+    <insert id="insertOption" parameterType="com.alrimjang.model.entity.SurveyOption">
+        INSERT INTO survey_options (id, question_id, seq, option_label)
+        VALUES (#{id}, #{questionId}, #{seq}, #{optionLabel})
+    </insert>
+
+    <select id="findPublishedSurveys" resultType="com.alrimjang.model.entity.Survey">
+        SELECT id, title, description, status, start_at, end_at,
+               created_by_user_id, created_by_username, created_by_name, created_at
+        FROM surveys
+        WHERE status = 'PUBLISHED'
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findAllSurveys" resultType="com.alrimjang.model.entity.Survey">
+        SELECT id, title, description, status, start_at, end_at,
+               created_by_user_id, created_by_username, created_by_name, created_at
+        FROM surveys
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findSurveyById" resultType="com.alrimjang.model.entity.Survey">
+        SELECT id, title, description, status, start_at, end_at,
+               created_by_user_id, created_by_username, created_by_name, created_at
+        FROM surveys
+        WHERE id = #{surveyId}
+    </select>
+
+    <select id="findQuestionsBySurveyId" resultType="com.alrimjang.model.entity.SurveyQuestion">
+        SELECT id, survey_id, seq, type, title, is_required, created_at
+        FROM survey_questions
+        WHERE survey_id = #{surveyId}
+        ORDER BY seq ASC
+    </select>
+
+    <select id="findOptionsBySurveyId" resultType="com.alrimjang.model.entity.SurveyOption">
+        SELECT o.id, o.question_id, o.seq, o.option_label
+        FROM survey_options o
+        INNER JOIN survey_questions q ON q.id = o.question_id
+        WHERE q.survey_id = #{surveyId}
+        ORDER BY q.seq ASC, o.seq ASC
+    </select>
+
+    <select id="countResponses" resultType="int">
+        SELECT COUNT(*)
+        FROM survey_responses
+        WHERE survey_id = #{surveyId}
+    </select>
+
+    <select id="countResponsesBySurveyAndUser" resultType="int">
+        SELECT COUNT(*)
+        FROM survey_responses
+        WHERE survey_id = #{surveyId}
+          AND user_id = #{userId}
+    </select>
+
+    <select id="countDistinctAnswersByQuestionId" resultType="int">
+        SELECT COUNT(DISTINCT response_id)
+        FROM survey_answers
+        WHERE question_id = #{questionId}
+    </select>
+
+    <select id="findOptionStatsByQuestionId" resultType="com.alrimjang.model.entity.SurveyOption">
+        SELECT o.id,
+               o.question_id,
+               o.seq,
+               o.option_label,
+               COALESCE(COUNT(a.id), 0) AS vote_count
+        FROM survey_options o
+        LEFT JOIN survey_answers a
+               ON a.option_id = o.id
+              AND a.question_id = o.question_id
+        WHERE o.question_id = #{questionId}
+        GROUP BY o.id, o.question_id, o.seq, o.option_label
+        ORDER BY o.seq ASC
+    </select>
+
+    <select id="findTextAnswersByQuestionId" resultType="string">
+        SELECT answer_text
+        FROM survey_answers
+        WHERE question_id = #{questionId}
+          AND answer_text IS NOT NULL
+          AND TRIM(answer_text) &lt;&gt; ''
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <insert id="insertResponse" parameterType="com.alrimjang.model.entity.SurveyResponse">
+        INSERT INTO survey_responses (id, survey_id, user_id, username, user_name, submitted_at)
+        VALUES (#{id}, #{surveyId}, #{userId}, #{username}, #{displayName}, #{submittedAt})
+    </insert>
+
+    <insert id="insertAnswerOption">
+        INSERT INTO survey_answers (id, response_id, survey_id, question_id, option_id, answer_text, created_at)
+        VALUES (#{id}, #{responseId}, #{surveyId}, #{questionId}, #{optionId}, NULL, #{createdAt})
+    </insert>
+
+    <insert id="insertAnswerText">
+        INSERT INTO survey_answers (id, response_id, survey_id, question_id, option_id, answer_text, created_at)
+        VALUES (#{id}, #{responseId}, #{surveyId}, #{questionId}, NULL, #{answerText}, #{createdAt})
+    </insert>
+</mapper>

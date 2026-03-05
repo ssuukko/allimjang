@@ -23,23 +23,24 @@
                     <a href="/admin" class="btn c-btn c-btn-outline c-admin-ghost-btn">관리자 홈</a>
                 </div>
 
+                <p class="c-muted mb-3">회원 기본 정보와 계정 상태를 확인합니다. 권한 변경은 좌측의 권한 관리 메뉴에서 진행하세요.</p>
+
                 <div class="card c-card">
                     <div class="card-body c-card__body p-0">
                         <div class="table-responsive">
                             <table class="table mb-0 c-table c-admin-table">
                                 <thead>
                                 <tr>
-                                    <th style="width: 18%">아이디</th>
-                                    <th style="width: 18%">이름</th>
+                                    <th style="width: 22%">아이디</th>
+                                    <th style="width: 22%">이름</th>
                                     <th style="width: 16%">역할</th>
                                     <th style="width: 24%">가입일</th>
-                                    <th style="width: 12%">상태</th>
-                                    <th style="width: 12%">공지권한</th>
+                                    <th style="width: 16%">상태</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr th:if="${#lists.isEmpty(users)}">
-                                    <td colspan="6" class="text-center c-muted py-5">등록된 회원이 없습니다.</td>
+                                    <td colspan="5" class="text-center c-muted py-5">등록된 회원이 없습니다.</td>
                                 </tr>
                                 <tr th:each="user : ${users}">
                                     <td th:text="${user.username}">username</td>
@@ -51,11 +52,6 @@
                                     <td>
                                         <span th:if="${user.enabled}" class="badge text-bg-success">활성</span>
                                         <span th:if="${!user.enabled}" class="badge text-bg-secondary">비활성</span>
-                                    </td>
-                                    <td>
-                                        <span th:if="${user.role == 'ADMIN' or user.role == 'ROLE_ADMIN'}" class="badge text-bg-primary">관리자</span>
-                                        <span th:if="${!(user.role == 'ADMIN' or user.role == 'ROLE_ADMIN') and user.canPostNotice}" class="badge text-bg-info">허용</span>
-                                        <span th:if="${!(user.role == 'ADMIN' or user.role == 'ROLE_ADMIN') and !user.canPostNotice}" class="badge text-bg-light border">미허용</span>
                                     </td>
                                 </tr>
                                 </tbody>

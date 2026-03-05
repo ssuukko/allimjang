@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설문 결과 목록 - 알림장</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 c-admin-page">
+<div th:replace="~{fragments/layout :: header('admin')}"></div>
+<div th:replace="~{fragments/layout :: memberPanel}"></div>
+
+<main class="container c-main c-admin-main flex-grow-1">
+    <div class="row g-4 c-admin-layout">
+        <div class="col-lg-3">
+            <div th:replace="~{admin/fragments/nav :: sidebar('surveyresults')}"></div>
+        </div>
+        <div class="col-lg-9">
+            <section class="c-surface c-admin-surface p-4 p-lg-5 c-fade-up">
+                <div class="c-page-header">
+                    <h2>설문 결과</h2>
+                    <a href="/admin/surveys/new" class="btn c-btn c-btn-outline c-admin-ghost-btn">설문 작성</a>
+                </div>
+
+                <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+                <div class="table-responsive" th:if="${!#lists.isEmpty(surveys)}">
+                    <table class="table mb-0 c-table c-admin-table">
+                        <thead>
+                        <tr>
+                            <th>제목</th>
+                            <th>상태</th>
+                            <th>응답수</th>
+                            <th>작성자</th>
+                            <th>작업</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="survey : ${surveys}">
+                            <td th:text="${survey.title}">설문 제목</td>
+                            <td>
+                                <span class="badge text-bg-success" th:if="${survey.status == 'PUBLISHED'}">진행중</span>
+                                <span class="badge text-bg-secondary" th:if="${survey.status != 'PUBLISHED'}" th:text="${survey.status}">상태</span>
+                            </td>
+                            <td th:text="${survey.responseCount}">0</td>
+                            <td th:text="${survey.createdByName}">관리자</td>
+                            <td>
+                                <a th:href="@{/admin/surveys/{id}/results(id=${survey.id})}" class="btn btn-sm c-btn c-btn-outline">상세 보기</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="c-muted mb-0" th:if="${#lists.isEmpty(surveys)}">
+                    생성된 설문이 없습니다.
+                </p>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -27,12 +27,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/ws-chat/**", "/api/chat/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                        .requestMatchers("/login", "/login-process", "/register", "/error").permitAll()
+                        .requestMatchers("/login", "/login-process", "/register", "/error", "/access-denied").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/admin/notifications/new").hasAnyRole("NOTIFICATION_WRITER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/admin/notifications").hasAnyRole("NOTIFICATION_WRITER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/notices/*/hide", "/notices/*/unhide").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/notices/new", "/notices/*/edit").hasAnyRole("NOTICE_WRITER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/notices", "/notices/*", "/notices/*/delete").hasAnyRole("NOTICE_WRITER", "ADMIN")
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/access-denied")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

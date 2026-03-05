@@ -23,20 +23,11 @@
                     <div class="small text-muted mb-3">채팅방 이동 및 개인 할 일 지정</div>
 
                     <div class="mb-2">
-                        <label for="roomSelect" class="form-label c-form-label mb-1">빠른 방 선택</label>
-                        <select id="roomSelect" class="form-select c-select">
-                            <option value="general">general</option>
-                            <option value="class-1">class-1</option>
-                            <option value="teachers">teachers</option>
-                        </select>
+                        <label for="roomSelect" class="form-label c-form-label mb-1">접근 가능한 방</label>
+                        <select id="roomSelect" class="form-select c-select"></select>
                     </div>
 
-                    <div class="mb-2">
-                        <label for="customRoomInput" class="form-label c-form-label mb-1">직접 roomId</label>
-                        <input id="customRoomInput" class="form-control c-input" placeholder="예: grade3-2">
-                    </div>
-
-                    <button id="joinRoomBtn" class="btn c-btn c-btn-outline w-100">방 이동</button>
+                    <button id="joinRoomBtn" class="btn c-btn c-btn-outline w-100">선택 방 입장</button>
                 </div>
 
                 <section id="taskPanel" class="c-chat-side-card c-task-panel d-none mt-3">
@@ -93,12 +84,11 @@
 <script>
     const params = new URLSearchParams(window.location.search);
     let roomId = (params.get("room") || "general").trim();
-    const partner = params.get("partner");
+    let partner = params.get("partner");
 
     const chatTitle = document.getElementById("chatTitle");
     const roomBadge = document.getElementById("roomBadge");
     const roomSelect = document.getElementById("roomSelect");
-    const customRoomInput = document.getElementById("customRoomInput");
     const joinRoomBtn = document.getElementById("joinRoomBtn");
     const chatBox = document.getElementById("chatBox");
     const msgInput = document.getElementById("msgInput");
@@ -120,8 +110,12 @@
     let taskDetailCollapsed = {};
     let countdownTimer = null;
     let taskRefreshTimer = null;
+    let readStatusTimer = null;
     let serverOffsetMs = 0;
     let currentUsername = "";
+    let currentUserId = "";
+    let accessibleRooms = [];
+    let partnerLastReadAtMs = null;
 
     function escapeHtml(value) {
         return String(value)
@@ -133,7 +127,7 @@
     }
 
     function isDirectRoom() {
-        return roomId.startsWith("dm__") && !!partner;
+        return roomId.startsWith("dm__");
     }
 
     function normalizeDateTimeLocal(date) {
@@ -144,22 +138,108 @@
     function applyRoomLabel() {
         if (partner) {
             chatTitle.textContent = "채팅 - @" + partner;
+        } else if (isDirectRoom()) {
+            chatTitle.textContent = "1:1 채팅";
         } else {
             chatTitle.textContent = "채팅";
         }
         roomBadge.textContent = "Room: " + roomId;
-        customRoomInput.value = roomId;
-        roomSelect.value = ["general", "class-1", "teachers"].includes(roomId) ? roomId : "general";
+        syncRoomSelectValue();
 
         const dm = isDirectRoom();
         taskPanel.classList.toggle("d-none", !dm);
         if (dm) {
-            taskAssigneeInput.value = partner;
+            taskAssigneeInput.value = partner || '';
             if (!taskDeadlineInput.value) {
                 const nextHour = new Date(Date.now() + (60 * 60 * 1000));
                 taskDeadlineInput.value = normalizeDateTimeLocal(nextHour);
             }
         }
+    }
+
+    function resolvePartnerIfNeeded() {
+        if (!isDirectRoom() || partner) {
+            return Promise.resolve();
+        }
+        return fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/partner')
+            .then(res => {
+                if (!res.ok) throw new Error('failed');
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.targetUsername) {
+                    partner = data.targetUsername;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("partner", partner);
+                    window.history.replaceState({}, "", url);
+                }
+            })
+            .catch(() => {});
+    }
+
+    function currentRoomTitle() {
+        if (isDirectRoom()) {
+            return partner ? ("1:1 - @" + partner) : "1:1 채팅";
+        }
+        return roomId;
+    }
+
+    function ensureCurrentRoomOption() {
+        if (!roomId) return;
+        const exists = accessibleRooms.some(r => r.roomId === roomId);
+        if (exists) return;
+        accessibleRooms.unshift({
+            roomId: roomId,
+            roomTitle: currentRoomTitle()
+        });
+    }
+
+    function renderRoomSelect() {
+        if (!roomSelect) return;
+        ensureCurrentRoomOption();
+        roomSelect.innerHTML = '';
+        accessibleRooms.forEach(function (room) {
+            const option = document.createElement('option');
+            option.value = room.roomId;
+            option.textContent = room.roomTitle || room.roomId;
+            roomSelect.appendChild(option);
+        });
+        syncRoomSelectValue();
+    }
+
+    function syncRoomSelectValue() {
+        if (!roomSelect || !roomId) return;
+        const hasOption = Array.from(roomSelect.options).some(opt => opt.value === roomId);
+        if (!hasOption) {
+            const option = document.createElement('option');
+            option.value = roomId;
+            option.textContent = currentRoomTitle();
+            roomSelect.insertBefore(option, roomSelect.firstChild);
+        }
+        roomSelect.value = roomId;
+    }
+
+    function loadAccessibleRooms() {
+        return fetch('/api/chat/rooms')
+            .then(function (res) {
+                if (!res.ok) throw new Error('failed');
+                return res.json();
+            })
+            .then(function (rooms) {
+                accessibleRooms = Array.isArray(rooms)
+                    ? rooms.map(function (r) {
+                        return {
+                            roomId: r.roomId,
+                            roomTitle: r.roomTitle || r.roomId
+                        };
+                    })
+                    : [];
+                renderRoomSelect();
+            })
+            .catch(function () {
+                accessibleRooms = [];
+                renderRoomSelect();
+            });
     }
 
     function applyUnreadBadge(count) {
@@ -169,15 +249,34 @@
 
     function appendMessage(m) {
         const item = document.createElement("div");
-        item.className = "c-chat-msg";
+        const mine = currentUserId && m && m.senderId === currentUserId;
+        item.className = "c-chat-msg" + (mine ? " c-chat-msg--mine" : "");
+        item.setAttribute("data-created-at", m && m.createdAt ? m.createdAt : "");
         item.innerHTML = "" +
             "<div class=\"c-chat-msg__head\">" +
             "<strong class=\"c-chat-msg__sender\">" + escapeHtml(m.senderName) + "</strong>" +
             "<span class=\"c-chat-msg__time\">" + escapeHtml(formatDateTime(m.createdAt)) + "</span>" +
             "</div>" +
-            "<div class=\"c-chat-msg__body\">" + escapeHtml(m.content) + "</div>";
+            "<div class=\"c-chat-msg__body\">" + escapeHtml(m.content) + "</div>" +
+            (mine ? "<div class=\"c-chat-msg__read\">1</div>" : "");
         chatBox.appendChild(item);
+        updateReadMarks();
         chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function loadMyIdentity() {
+        return fetch('/api/chat/me')
+            .then(function (res) {
+                if (!res.ok) throw new Error('failed');
+                return res.json();
+            })
+            .then(function (me) {
+                currentUserId = (me && me.id) ? String(me.id) : "";
+                currentUsername = (me && me.username) ? String(me.username) : currentUsername;
+            })
+            .catch(function () {
+                currentUserId = "";
+            });
     }
 
     function loadHistory() {
@@ -190,6 +289,7 @@
                     return;
                 }
                 list.forEach(appendMessage);
+                refreshReadStatus();
             })
             .catch(() => {
                 chatBox.innerHTML = '<div class="c-chat-empty c-chat-empty--error">메시지 불러오기에 실패했습니다.</div>';
@@ -208,6 +308,7 @@
             }
             appendMessage(JSON.parse(frame.body));
             refreshUnreadCount();
+            refreshReadStatus();
         });
     }
 
@@ -229,14 +330,18 @@
         url.searchParams.set("room", roomId);
         url.searchParams.delete("partner");
         window.history.replaceState({}, "", url);
+        partner = null;
 
         stopTaskTimers();
-        applyRoomLabel();
-        loadHistory();
-        subscribeRoom();
-        markAsRead();
-        refreshUnreadCount();
-        refreshTasks();
+        resolvePartnerIfNeeded().finally(function () {
+            loadAccessibleRooms();
+            applyRoomLabel();
+            loadHistory();
+            subscribeRoom();
+            markAsRead();
+            refreshUnreadCount();
+            refreshTasks();
+        });
     }
 
     function sendMessage() {
@@ -260,8 +365,51 @@
 
     function markAsRead() {
         fetch("/api/chat/rooms/" + encodeURIComponent(roomId) + "/read", { method: "POST" })
-            .then(() => applyUnreadBadge(0))
+            .then(() => {
+                applyUnreadBadge(0);
+                refreshReadStatus();
+            })
             .catch(() => {});
+    }
+
+    function updateReadMarks() {
+        if (!chatBox) return;
+        chatBox.querySelectorAll('.c-chat-msg--mine').forEach(function (msg) {
+            const readEl = msg.querySelector('.c-chat-msg__read');
+            if (!readEl) return;
+            if (partnerLastReadAtMs == null) {
+                readEl.textContent = '1';
+                return;
+            }
+            const createdAt = new Date(msg.getAttribute('data-created-at')).getTime();
+            if (Number.isNaN(createdAt)) {
+                readEl.textContent = '';
+                return;
+            }
+            readEl.textContent = createdAt > partnerLastReadAtMs ? '1' : '';
+        });
+    }
+
+    function refreshReadStatus() {
+        if (!isDirectRoom()) {
+            partnerLastReadAtMs = null;
+            updateReadMarks();
+            return;
+        }
+        fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/read-status')
+            .then(function (res) {
+                if (!res.ok) throw new Error('failed');
+                return res.json();
+            })
+            .then(function (data) {
+                const value = data && data.partnerLastReadAt ? new Date(data.partnerLastReadAt).getTime() : null;
+                partnerLastReadAtMs = Number.isNaN(value) ? null : value;
+                updateReadMarks();
+            })
+            .catch(function () {
+                partnerLastReadAtMs = null;
+                updateReadMarks();
+            });
     }
 
     function showTaskError(message) {
@@ -442,12 +590,17 @@
             clearInterval(taskRefreshTimer);
             taskRefreshTimer = null;
         }
+        if (readStatusTimer) {
+            clearInterval(readStatusTimer);
+            readStatusTimer = null;
+        }
     }
 
     function startTaskTimers() {
         stopTaskTimers();
         countdownTimer = setInterval(updateTaskCountdowns, 1000);
         taskRefreshTimer = setInterval(refreshTasks, 30000);
+        readStatusTimer = setInterval(refreshReadStatus, 3000);
     }
 
     function refreshTasks() {
@@ -571,7 +724,7 @@
     });
 
     joinRoomBtn.addEventListener("click", function () {
-        moveRoom(customRoomInput.value);
+        moveRoom(roomSelect.value);
     });
 
     sendBtn.addEventListener("click", sendMessage);
@@ -587,14 +740,19 @@
         markAsRead();
         refreshUnreadCount();
         refreshTasks();
+        refreshReadStatus();
     });
 
-    applyRoomLabel();
-    loadHistory();
-    connectSocket();
-    markAsRead();
-    refreshUnreadCount();
-    refreshTasks();
+    Promise.allSettled([resolvePartnerIfNeeded(), loadMyIdentity()]).finally(function () {
+        loadAccessibleRooms().finally(function () {
+            applyRoomLabel();
+            loadHistory();
+            connectSocket();
+            markAsRead();
+            refreshUnreadCount();
+            refreshTasks();
+        });
+    });
 </script>
 </body>
 </html>

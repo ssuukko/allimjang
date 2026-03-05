@@ -5,13 +5,13 @@
 <mapper namespace="com.alrimjang.mapper.UserMapper">
 
     <select id="findByUsername" parameterType="string" resultType="Users">
-        SELECT "id", "username", "password", "name", "role", "created_at", "enabled", "can_post_notice"
+        SELECT "id", "username", "password", "name", "role", "created_at", "enabled", "can_post_notice", "can_post_notification"
         FROM users
         WHERE "username" = #{username}
     </select>
 
     <select id="findAllUsers" resultType="Users">
-        SELECT "id", "username", "name", "role", "created_at", "enabled", "can_post_notice"
+        SELECT "id", "username", "name", "role", "created_at", "enabled", "can_post_notice", "can_post_notification"
         FROM users
         ORDER BY "enabled" DESC, "name" ASC
     </select>
@@ -22,9 +22,15 @@
         WHERE id = #{userId}
     </update>
 
+    <update id="updateNotificationWritePermission">
+        UPDATE users
+        SET can_post_notification = #{canPostNotification}
+        WHERE id = #{userId}
+    </update>
+
     <insert id="insertUser" parameterType="Users">
-        INSERT INTO users ("id", "username", "password", "name", "role", "created_at", "enabled", "can_post_notice")
-        VALUES (#{id}, #{username}, #{password}, #{name}, #{role}, #{createdAt}, #{enabled}, #{canPostNotice})
+        INSERT INTO users ("id", "username", "password", "name", "role", "created_at", "enabled", "can_post_notice", "can_post_notification")
+        VALUES (#{id}, #{username}, #{password}, #{name}, #{role}, #{createdAt}, #{enabled}, #{canPostNotice}, #{canPostNotification})
     </insert>
 
 </mapper>

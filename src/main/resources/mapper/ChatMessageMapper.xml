@@ -26,4 +26,104 @@
           AND m.sender_id &lt;&gt; #{userId}
           AND (r.last_read_at IS NULL OR m.created_at &gt; r.last_read_at)
     </select>
+
+    <select id="findRoomSummaries" resultType="com.alrimjang.model.ChatRoomSummaryResponse">
+        WITH my_rooms AS (
+            SELECT DISTINCT m.room_id
+            FROM chat_messages m
+            WHERE m.sender_id = #{userId}
+               OR (m.room_id LIKE 'dm__%'
+                   AND (
+                       split_part(m.room_id, '__', 2) = #{userToken}
+                       OR split_part(m.room_id, '__', 3) = #{userToken}
+                   ))
+               OR (m.room_id LIKE 'grp__%'
+                   AND EXISTS (
+                       SELECT 1
+                       FROM group_members gm
+                       WHERE gm.group_id = substring(m.room_id from 6)
+                         AND gm.user_id = #{userId}
+                   ))
+            UNION
+            SELECT DISTINCT t.room_id
+            FROM chat_tasks t
+            WHERE t.created_by_user_id = #{userId}
+               OR t.assignee_user_id = #{userId}
+            UNION
+            SELECT DISTINCT CONCAT('grp__', g.id)
+            FROM groups g
+            INNER JOIN group_members gm ON gm.group_id = g.id
+            WHERE gm.user_id = #{userId}
+        ),
+        last_message AS (
+            SELECT DISTINCT ON (m.room_id)
+                   m.room_id,
+                   m.content,
+                   m.sender_name,
+                   m.created_at
+            FROM chat_messages m
+            INNER JOIN my_rooms r ON r.room_id = m.room_id
+            ORDER BY m.room_id, m.created_at DESC
+        ),
+        last_task AS (
+            SELECT DISTINCT ON (t.room_id)
+                   t.room_id,
+                   t.title,
+                   t.created_at
+            FROM chat_tasks t
+            INNER JOIN my_rooms r ON r.room_id = t.room_id
+            ORDER BY t.room_id, t.created_at DESC
+        ),
+        room_base AS (
+            SELECT r.room_id,
+                   lm.content AS msg_content,
+                   lm.sender_name AS msg_sender_name,
+                   lm.created_at AS msg_created_at,
+                   lt.title AS task_title,
+                   lt.created_at AS task_created_at
+            FROM my_rooms r
+            LEFT JOIN last_message lm ON lm.room_id = r.room_id
+            LEFT JOIN last_task lt ON lt.room_id = r.room_id
+        )
+        SELECT rb.room_id,
+               CASE
+                   WHEN rb.msg_created_at IS NOT NULL
+                        AND (rb.task_created_at IS NULL OR rb.msg_created_at >= rb.task_created_at)
+                       THEN rb.msg_content
+                   WHEN rb.task_created_at IS NOT NULL
+                       THEN CONCAT('[할 일] ', COALESCE(rb.task_title, '새 과제'))
+                   ELSE '(메시지 없음)'
+               END AS last_message,
+               CASE
+                   WHEN rb.msg_created_at IS NOT NULL
+                        AND (rb.task_created_at IS NULL OR rb.msg_created_at >= rb.task_created_at)
+                       THEN rb.msg_sender_name
+                   WHEN rb.task_created_at IS NOT NULL
+                       THEN '과제'
+                   ELSE '-'
+               END AS last_sender_name,
+               CASE
+                   WHEN rb.msg_created_at IS NOT NULL
+                        AND (rb.task_created_at IS NULL OR rb.msg_created_at >= rb.task_created_at)
+                       THEN rb.msg_created_at
+                   ELSE rb.task_created_at
+               END AS last_message_at,
+               COALESCE(SUM(
+                   CASE WHEN m.sender_id &lt;&gt; #{userId}
+                             AND (rr.last_read_at IS NULL OR m.created_at &gt; rr.last_read_at)
+                        THEN 1 ELSE 0 END
+               ), 0)::int AS unread_count
+        FROM room_base rb
+        LEFT JOIN chat_messages m ON m.room_id = rb.room_id
+        LEFT JOIN chat_room_reads rr
+               ON rr.room_id = rb.room_id
+              AND rr.user_id = #{userId}
+        GROUP BY rb.room_id, rb.msg_content, rb.msg_sender_name, rb.msg_created_at, rb.task_title, rb.task_created_at
+        ORDER BY CASE
+                     WHEN rb.msg_created_at IS NOT NULL
+                          AND (rb.task_created_at IS NULL OR rb.msg_created_at >= rb.task_created_at)
+                         THEN rb.msg_created_at
+                     ELSE rb.task_created_at
+                 END DESC NULLS LAST
+    </select>
 </mapper>
