@@ -15,7 +15,10 @@
     <section class="c-surface p-4 p-lg-5 c-fade-up">
         <div class="c-page-header">
             <h2>채팅 목록</h2>
-            <a href="/dashboard" class="btn c-btn c-btn-outline">대시보드</a>
+            <div class="d-flex gap-2">
+                <button type="button" id="openCreateRoomBtn" class="btn c-btn c-btn-outline">방 만들기</button>
+                <a href="/dashboard" class="btn c-btn c-btn-outline">대시보드</a>
+            </div>
         </div>
         <p class="c-muted mb-3">최근 대화한 채팅방을 선택해 입장하세요.</p>
 
@@ -33,6 +36,36 @@
     </section>
 </main>
 
+<div class="modal fade" id="createRoomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">단체 채팅방 만들기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="groupRoomName" class="form-label c-form-label mb-1">방 이름</label>
+                    <input id="groupRoomName" class="form-control c-input" maxlength="120" placeholder="예: 2학년 운영회의">
+                </div>
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <label class="form-label c-form-label mb-0">초대할 회원</label>
+                    <small id="groupMemberCountText" class="text-muted">0명 선택</small>
+                </div>
+                <div id="groupMemberList" class="c-group-member-list">
+                    <div class="small text-muted">불러오는 중...</div>
+                </div>
+                <div class="small text-muted mt-2">단체 채팅은 본인 포함 최소 3명이어야 생성됩니다.</div>
+                <div id="groupCreateError" class="alert alert-danger mt-2 d-none py-2 px-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn c-btn c-btn-outline" data-bs-dismiss="modal">취소</button>
+                <button type="button" id="createGroupRoomSubmitBtn" class="btn btn-primary c-btn c-btn-primary">생성</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/layout :: footer}"></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -41,12 +74,23 @@
         const searchInput = document.getElementById('chatRoomSearch');
         const sortRecentBtn = document.getElementById('sortRecentBtn');
         const sortPinnedBtn = document.getElementById('sortPinnedBtn');
-        if (!list || !searchInput || !sortRecentBtn || !sortPinnedBtn) return;
+        const openCreateRoomBtn = document.getElementById('openCreateRoomBtn');
+        const createRoomModalEl = document.getElementById('createRoomModal');
+        const groupRoomNameInput = document.getElementById('groupRoomName');
+        const groupMemberList = document.getElementById('groupMemberList');
+        const groupMemberCountText = document.getElementById('groupMemberCountText');
+        const createGroupRoomSubmitBtn = document.getElementById('createGroupRoomSubmitBtn');
+        const groupCreateError = document.getElementById('groupCreateError');
+
+        if (!list || !searchInput || !sortRecentBtn || !sortPinnedBtn || !openCreateRoomBtn || !createRoomModalEl
+            || !groupRoomNameInput || !groupMemberList || !groupMemberCountText || !createGroupRoomSubmitBtn || !groupCreateError) return;
 
         const PIN_KEY = 'chatPinnedRooms';
         let allRooms = [];
         let sortMode = 'recent';
         let pinnedRooms = new Set();
+        let memberOptions = [];
+        const createRoomModal = new bootstrap.Modal(createRoomModalEl);
 
         try {
             const saved = JSON.parse(localStorage.getItem(PIN_KEY) || '[]');
@@ -85,6 +129,66 @@
 
         const persistPinned = function () {
             localStorage.setItem(PIN_KEY, JSON.stringify(Array.from(pinnedRooms)));
+        };
+
+        const showGroupCreateError = function (message) {
+            groupCreateError.textContent = message;
+            groupCreateError.classList.remove('d-none');
+        };
+
+        const hideGroupCreateError = function () {
+            groupCreateError.textContent = '';
+            groupCreateError.classList.add('d-none');
+        };
+
+        const selectedMemberUsernames = function () {
+            return Array.from(groupMemberList.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(el => el.value);
+        };
+
+        const refreshSelectedCount = function () {
+            groupMemberCountText.textContent = selectedMemberUsernames().length + '명 선택';
+        };
+
+        const renderMemberOptions = function () {
+            if (!memberOptions.length) {
+                groupMemberList.innerHTML = '<div class="small text-muted">선택 가능한 회원이 없습니다.</div>';
+                refreshSelectedCount();
+                return;
+            }
+            groupMemberList.innerHTML = memberOptions.map(function (m) {
+                const status = m.online ? '활동중' : '비활동중';
+                return ''
+                    + '<label class="c-group-member-item">'
+                    +   '<input type="checkbox" value="' + escapeHtml(m.username) + '">'
+                    +   '<span class="ms-2">' + escapeHtml(m.name) + ' (@' + escapeHtml(m.username) + ')</span>'
+                    +   '<span class="ms-auto small text-muted">' + status + '</span>'
+                    + '</label>';
+            }).join('');
+            groupMemberList.querySelectorAll('input[type="checkbox"]').forEach(function (el) {
+                el.addEventListener('change', refreshSelectedCount);
+            });
+            refreshSelectedCount();
+        };
+
+        const loadMembersForGroupCreate = function () {
+            groupMemberList.innerHTML = '<div class="small text-muted">불러오는 중...</div>';
+            return fetch('/api/chat/members')
+                .then(function (res) {
+                    if (!res.ok) throw new Error('failed');
+                    return res.json();
+                })
+                .then(function (members) {
+                    memberOptions = Array.isArray(members)
+                        ? members.filter(function (m) { return !m.me; })
+                        : [];
+                    renderMemberOptions();
+                })
+                .catch(function () {
+                    memberOptions = [];
+                    groupMemberList.innerHTML = '<div class="small text-danger">회원 목록을 불러오지 못했습니다.</div>';
+                    refreshSelectedCount();
+                });
         };
 
         const getSortableTime = function (room) {
@@ -196,6 +300,49 @@
             .catch(() => {
                 list.innerHTML = '<div class="text-danger small">채팅 목록을 불러오지 못했습니다.</div>';
             });
+
+        openCreateRoomBtn.addEventListener('click', function () {
+            hideGroupCreateError();
+            groupRoomNameInput.value = '';
+            loadMembersForGroupCreate();
+            createRoomModal.show();
+        });
+
+        createGroupRoomSubmitBtn.addEventListener('click', function () {
+            hideGroupCreateError();
+            const selected = selectedMemberUsernames();
+            if (selected.length < 2) {
+                showGroupCreateError('최소 2명 이상 선택해 주세요. (본인 포함 3명)');
+                return;
+            }
+            fetch('/api/chat/group-rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomName: groupRoomNameInput.value.trim(),
+                    memberUsernames: selected
+                })
+            })
+                .then(function (res) {
+                    if (!res.ok) {
+                        return res.text().then(function (text) {
+                            throw new Error(text || '채팅방 생성에 실패했습니다.');
+                        });
+                    }
+                    return res.json();
+                })
+                .then(function (data) {
+                    createRoomModal.hide();
+                    if (data && data.roomId) {
+                        window.location.href = '/chat/room?room=' + encodeURIComponent(data.roomId);
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(function (err) {
+                    showGroupCreateError(err.message || '채팅방 생성에 실패했습니다.');
+                });
+        });
 
         searchInput.addEventListener('input', render);
         sortRecentBtn.addEventListener('click', function () {

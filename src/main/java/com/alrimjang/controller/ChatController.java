@@ -5,12 +5,14 @@ import com.alrimjang.mapper.ChatReadMapper;
 import com.alrimjang.mapper.GroupMapper;
 import com.alrimjang.mapper.UserMapper;
 import com.alrimjang.model.ChatDirectRoomResponse;
+import com.alrimjang.model.ChatGroupCreateRequest;
 import com.alrimjang.model.ChatMemberStatus;
 import com.alrimjang.model.ChatRoomSummaryResponse;
 import com.alrimjang.model.ChatSendRequest;
 import com.alrimjang.model.ChatTaskCreateRequest;
 import com.alrimjang.model.entity.ChatMessage;
 import com.alrimjang.model.entity.ChatTask;
+import com.alrimjang.model.entity.Group;
 import com.alrimjang.model.entity.Users;
 import com.alrimjang.service.ActiveUserTracker;
 import com.alrimjang.service.ChatService;
@@ -32,8 +34,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller
@@ -187,7 +193,7 @@ public class ChatController {
         }
         String myToken = normalizeRoomToken(me.getUsername());
         List<Users> allUsers = userMapper.findAllUsers();
-        Map<String, String> myGroups = groupMapper.findByUserId(me.getId()).stream()
+        Map<String, String> myGroups = groupMapper.findChatByUserId(me.getId()).stream()
                 .collect(Collectors.toMap(
                         g -> g.getId(),
                         g -> g.getName() + (g.getCode() != null && !g.getCode().isBlank() ? " (" + g.getCode() + ")" : ""),
@@ -218,6 +224,77 @@ public class ChatController {
 
         String roomId = buildDirectRoomId(me.getUsername(), target.getUsername());
         return new ChatDirectRoomResponse(roomId, target.getUsername(), target.getName());
+    }
+
+    @PostMapping("/api/chat/group-rooms")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, String> createGroupRoom(@RequestBody ChatGroupCreateRequest request, Principal principal) {
+        if (principal == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+        if (request == null) {
+            throw new IllegalArgumentException("요청이 비어 있습니다.");
+        }
+
+        Users me = userMapper.findByUsername(principal.getName());
+        if (me == null) {
+            throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
+        }
+
+        Set<String> usernames = new HashSet<>();
+        usernames.add(me.getUsername());
+        if (request.getMemberUsernames() != null) {
+            usernames.addAll(
+                    request.getMemberUsernames().stream()
+                            .filter(v -> v != null && !v.isBlank())
+                            .map(String::trim)
+                            .collect(Collectors.toSet())
+            );
+        }
+        if (usernames.size() < 3) {
+            throw new IllegalArgumentException("단체 채팅은 최소 3명(본인 포함) 이상이어야 합니다.");
+        }
+
+        List<Users> members = new ArrayList<>();
+        for (String username : usernames) {
+            Users user = userMapper.findByUsername(username);
+            if (user == null) {
+                throw new IllegalArgumentException("존재하지 않는 사용자입니다: " + username);
+            }
+            members.add(user);
+        }
+
+        String groupId = UUID.randomUUID().toString();
+        String roomName = request.getRoomName() == null ? "" : request.getRoomName().trim();
+        if (roomName.isBlank()) {
+            roomName = members.stream()
+                    .map(Users::getName)
+                    .limit(3)
+                    .collect(Collectors.joining(", "));
+            if (members.size() > 3) {
+                roomName += " 외 " + (members.size() - 3) + "명";
+            }
+        }
+        if (!roomName.endsWith(" 단체방")) {
+            roomName = roomName + " 단체방";
+        }
+
+        Group group = Group.builder()
+                .id(groupId)
+                .name(roomName)
+                .type("CHAT")
+                .createdAt(LocalDateTime.now())
+                .build();
+        groupMapper.insertGroup(group);
+        for (Users member : members) {
+            groupMapper.insertGroupMember(groupId, member.getId());
+        }
+
+        return Map.of(
+                "roomId", "grp__" + groupId,
+                "roomTitle", "그룹 - " + roomName
+        );
     }
 
     @GetMapping("/api/chat/rooms/{roomId}/partner")

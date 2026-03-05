@@ -43,7 +43,7 @@ public class ChatRoomAccessService {
         if (user == null || user.getId() == null || user.getId().isBlank()) {
             return false;
         }
-        return groupMapper.countMemberByGroupIdAndUserId(groupId, user.getId()) > 0;
+        return groupMapper.countChatMemberByGroupIdAndUserId(groupId, user.getId()) > 0;
     }
 
     public boolean isDirectRoom(String roomId) {

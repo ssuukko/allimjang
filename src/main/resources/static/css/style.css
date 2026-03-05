@@ -827,6 +827,28 @@ a:hover {
     font-weight: 700;
 }
 
+.c-group-member-list {
+    max-height: 270px;
+    overflow-y: auto;
+    border: 1px solid rgba(24, 44, 70, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 0.35rem;
+}
+
+.c-group-member-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.4rem 0.45rem;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.c-group-member-item:hover {
+    background: rgba(235, 242, 252, 0.7);
+}
+
 .c-chat-pin-btn {
     min-width: 34px;
     height: 30px;

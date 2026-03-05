@@ -54,6 +54,7 @@
             FROM groups g
             INNER JOIN group_members gm ON gm.group_id = g.id
             WHERE gm.user_id = #{userId}
+              AND g.type = 'CHAT'
         ),
         last_message AS (
             SELECT DISTINCT ON (m.room_id)

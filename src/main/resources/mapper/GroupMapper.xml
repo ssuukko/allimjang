@@ -34,4 +34,32 @@
           AND user_id = #{userId}
     </select>
 
+    <select id="findChatByUserId" resultMap="GroupResultMap">
+        SELECT g.id, g.org_id, g.code, g.name, g.type, g.created_at
+        FROM groups g
+        INNER JOIN group_members gm ON gm.group_id = g.id
+        WHERE gm.user_id = #{userId}
+          AND g.type = 'CHAT'
+        ORDER BY g.created_at DESC
+    </select>
+
+    <select id="countChatMemberByGroupIdAndUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM group_members gm
+        INNER JOIN groups g ON g.id = gm.group_id
+        WHERE gm.group_id = #{groupId}
+          AND gm.user_id = #{userId}
+          AND g.type = 'CHAT'
+    </select>
+
+    <insert id="insertGroup" parameterType="com.alrimjang.model.entity.Group">
+        INSERT INTO groups (id, org_id, code, name, type, created_at)
+        VALUES (#{id}, #{orgId}, #{code}, #{name}, #{type}, #{createdAt})
+    </insert>
+
+    <insert id="insertGroupMember">
+        INSERT INTO group_members (group_id, user_id)
+        VALUES (#{groupId}, #{userId})
+    </insert>
+
 </mapper>
