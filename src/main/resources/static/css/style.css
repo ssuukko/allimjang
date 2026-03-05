@@ -728,6 +728,24 @@ a:hover {
     color: #172842;
 }
 
+.c-chat-room-picker {
+    padding: 0.5rem;
+    border: 1px solid rgba(24, 44, 70, 0.12);
+    border-radius: 12px;
+    background: rgba(250, 252, 255, 0.85);
+}
+
+.c-chat-room-select {
+    min-height: 40px;
+    font-size: 0.88rem;
+}
+
+.c-chat-room-join {
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
 .c-chat-main {
     display: flex;
     flex-direction: column;

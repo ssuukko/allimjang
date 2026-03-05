@@ -22,12 +22,14 @@
                     </div>
                     <div class="small text-muted mb-3">채팅방 이동 및 개인 할 일 지정</div>
 
-                    <div class="mb-2">
-                        <label for="roomSelect" class="form-label c-form-label mb-1">접근 가능한 방</label>
-                        <select id="roomSelect" class="form-select c-select"></select>
+                    <div class="mb-2 c-chat-room-picker">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="roomSelect" class="form-label c-form-label mb-0">접근 가능한 방</label>
+                            <small id="roomCountText" class="text-muted">0개</small>
+                        </div>
+                        <select id="roomSelect" class="form-select c-select c-chat-room-select"></select>
                     </div>
-
-                    <button id="joinRoomBtn" class="btn c-btn c-btn-outline w-100">선택 방 입장</button>
+                    <button id="joinRoomBtn" class="btn c-btn c-btn-outline w-100 c-chat-room-join">선택 방 입장</button>
                 </div>
 
                 <section id="taskPanel" class="c-chat-side-card c-task-panel d-none mt-3">
@@ -89,6 +91,7 @@
     const chatTitle = document.getElementById("chatTitle");
     const roomBadge = document.getElementById("roomBadge");
     const roomSelect = document.getElementById("roomSelect");
+    const roomCountText = document.getElementById("roomCountText");
     const joinRoomBtn = document.getElementById("joinRoomBtn");
     const chatBox = document.getElementById("chatBox");
     const msgInput = document.getElementById("msgInput");
@@ -144,7 +147,7 @@
             chatTitle.textContent = "채팅";
         }
         roomBadge.textContent = "Room: " + roomId;
-        syncRoomSelectValue();
+        renderRoomSelect();
 
         const dm = isDirectRoom();
         taskPanel.classList.toggle("d-none", !dm);
@@ -198,6 +201,17 @@
         if (!roomSelect) return;
         ensureCurrentRoomOption();
         roomSelect.innerHTML = '';
+        if (!accessibleRooms.length) {
+            const empty = document.createElement('option');
+            empty.value = '';
+            empty.textContent = '접근 가능한 방이 없습니다';
+            roomSelect.appendChild(empty);
+            roomSelect.disabled = true;
+            if (roomCountText) roomCountText.textContent = '0개';
+            return;
+        }
+        roomSelect.disabled = false;
+        if (roomCountText) roomCountText.textContent = accessibleRooms.length + '개';
         accessibleRooms.forEach(function (room) {
             const option = document.createElement('option');
             option.value = room.roomId;
@@ -208,8 +222,10 @@
     }
 
     function syncRoomSelectValue() {
-        if (!roomSelect || !roomId) return;
-        const hasOption = Array.from(roomSelect.options).some(opt => opt.value === roomId);
+        if (!roomSelect || !roomId || roomSelect.disabled) return;
+        const hasOption = Array.from(roomSelect.options).some(function (opt) {
+            return opt.value === roomId;
+        });
         if (!hasOption) {
             const option = document.createElement('option');
             option.value = roomId;
@@ -720,10 +736,12 @@
     }
 
     roomSelect.addEventListener("change", function () {
+        if (!roomSelect.value) return;
         moveRoom(roomSelect.value);
     });
 
     joinRoomBtn.addEventListener("click", function () {
+        if (!roomSelect.value) return;
         moveRoom(roomSelect.value);
     });
 
