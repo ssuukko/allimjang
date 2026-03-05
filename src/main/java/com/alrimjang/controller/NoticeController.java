@@ -76,6 +76,54 @@ public class NoticeController {
         return "notices/list";
     }
 
+    @GetMapping("/notifications")
+    public String myNotifications(Model model,
+                                  Principal principal,
+                                  @RequestParam(name = "unreadOnly", defaultValue = "false") boolean unreadOnly) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        if (actor == null) {
+            throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
+        }
+
+        List<NoticeReceipt> receipts = noticeAudienceService.findMyReceipts(actor.getId(), unreadOnly);
+        long unreadCount = receipts.stream().filter(receipt -> !receipt.isRead()).count();
+
+        model.addAttribute("receipts", receipts);
+        model.addAttribute("unreadOnly", unreadOnly);
+        model.addAttribute("unreadCount", unreadCount);
+        return "notifications/list";
+    }
+
+    @GetMapping("/notifications/{id}")
+    public String notificationDetail(@PathVariable String id,
+                                     Model model,
+                                     Principal principal,
+                                     Authentication authentication) {
+        Users actor = userMapper.findByUsername(principal.getName());
+        if (actor == null) {
+            throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
+        }
+
+        boolean actorIsAdmin = isAdmin(authentication);
+        if (!actorIsAdmin && !noticeAudienceService.hasReceipt(id, actor.getId())) {
+            return "redirect:/notifications?error=forbidden";
+        }
+
+        Notice notice = noticeService.getNoticeById(id, true);
+        if (notice == null) {
+            return "redirect:/notifications";
+        }
+
+        try {
+            noticeAudienceService.markAsRead(id, actor.getId());
+        } catch (IllegalArgumentException ignored) {
+            // 이미 읽음/대상 아님
+        }
+
+        model.addAttribute("notice", notice);
+        return "notifications/detail";
+    }
+
     @PostMapping("/notices")
     public String createNotice(@ModelAttribute Notice notice,
                                @RequestParam(name = "targetAll", defaultValue = "false") boolean targetAll,

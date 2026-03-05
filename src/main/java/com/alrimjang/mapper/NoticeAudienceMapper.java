@@ -23,6 +23,9 @@ public interface NoticeAudienceMapper {
     int markAsRead(@Param("noticeId") String noticeId,
                    @Param("userId") String userId);
 
+    int countReceiptByNoticeAndUser(@Param("noticeId") String noticeId,
+                                    @Param("userId") String userId);
+
     List<NoticeReceipt> findReceiptsByUser(@Param("userId") String userId,
                                            @Param("unreadOnly") boolean unreadOnly);
 }

@@ -25,6 +25,7 @@
                 <li class="nav-item">
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle"
+                           th:classappend="${activeMenu == 'notifications'} ? ' active' : ''"
                            href="#"
                            role="button"
                            id="noticePreviewButton"
@@ -39,7 +40,7 @@
                                 <div class="c-notice-preview-empty">불러오는 중...</div>
                             </div>
                             <div class="c-notice-preview-footer">
-                                <a href="/notices" class="small text-decoration-none">전체 공지 보기</a>
+                                <a href="/notifications" class="small text-decoration-none">전체 알림 보기</a>
                             </div>
                         </div>
                     </div>
@@ -113,7 +114,7 @@
                     const title = escapeHtml(item.noticeTitle || '(제목 없음)');
                     const deliveredAt = formatDate(item.deliveredAt);
                     const noticeId = item.noticeId ? encodeURIComponent(item.noticeId) : '';
-                    const href = noticeId ? '/notices/' + noticeId : '#';
+                    const href = noticeId ? '/notifications/' + noticeId : '#';
                     const linkClass = noticeId ? 'c-notice-preview-link' : 'c-notice-preview-link disabled';
                     return ''
                         + '<a class="' + linkClass + '" href="' + href + '">'

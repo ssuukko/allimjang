@@ -5,7 +5,7 @@
 
     <insert id="markAsRead">
         INSERT INTO chat_room_reads (room_id, user_id, last_read_at)
-        VALUES (#{roomId}, #{userId}, NOW())
+        VALUES (#{roomId}, #{userId}, #{readAt})
         ON CONFLICT (user_id, room_id)
         DO UPDATE SET last_read_at = EXCLUDED.last_read_at
     </insert>

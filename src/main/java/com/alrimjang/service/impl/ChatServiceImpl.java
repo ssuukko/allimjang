@@ -91,7 +91,7 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
         }
         chatRoomAccessService.assertAccessible(roomId, user.getUsername());
-        chatReadMapper.markAsRead(roomId, user.getId());
+        chatReadMapper.markAsRead(roomId, user.getId(), LocalDateTime.now());
     }
 
     @Override

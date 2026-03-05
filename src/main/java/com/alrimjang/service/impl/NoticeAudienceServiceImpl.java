@@ -90,6 +90,11 @@ public class NoticeAudienceServiceImpl implements NoticeAudienceService {
     }
 
     @Override
+    public boolean hasReceipt(String noticeId, String userId) {
+        return noticeAudienceMapper.countReceiptByNoticeAndUser(noticeId, userId) > 0;
+    }
+
+    @Override
     public List<NoticeReceipt> findMyReceipts(String userId, boolean unreadOnly) {
         return noticeAudienceMapper.findReceiptsByUser(userId, unreadOnly);
     }

@@ -75,6 +75,13 @@
           AND read_at IS NULL
     </update>
 
+    <select id="countReceiptByNoticeAndUser" resultType="int">
+        SELECT COUNT(*)
+        FROM notice_receipts
+        WHERE notice_id = #{noticeId}
+          AND user_id = #{userId}
+    </select>
+
     <select id="findReceiptsByUser" resultMap="NoticeReceiptResultMap">
         SELECT nr.id,
                nr.notice_id,

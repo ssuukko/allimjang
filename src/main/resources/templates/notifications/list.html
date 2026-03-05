@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 알림 - 알림장</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<div th:replace="~{fragments/layout :: header('notifications')}"></div>
+<div th:replace="~{fragments/layout :: memberPanel}"></div>
+
+<main class="container c-main flex-grow-1">
+    <section class="c-surface p-4 p-lg-5 c-fade-up">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <h2 class="mb-0">내 알림</h2>
+            <a href="/notices" class="btn c-btn c-btn-outline">공지사항 보기</a>
+        </div>
+        <p class="c-muted mb-3" th:text="'총 ' + ${#lists.size(receipts)} + '건 · 안읽음 ' + ${unreadCount} + '건'">총 0건 · 안읽음 0건</p>
+
+        <div class="d-flex gap-2 mb-3">
+            <a th:href="@{/notifications(unreadOnly=false)}"
+               class="btn btn-sm c-btn"
+               th:classappend="${!unreadOnly} ? ' c-btn-primary' : ' c-btn-outline'">전체</a>
+            <a th:href="@{/notifications(unreadOnly=true)}"
+               class="btn btn-sm c-btn"
+               th:classappend="${unreadOnly} ? ' c-btn-primary' : ' c-btn-outline'">안읽음만</a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                <tr>
+                    <th style="width: 50%">제목</th>
+                    <th style="width: 20%">수신 시각</th>
+                    <th style="width: 15%">상태</th>
+                    <th style="width: 15%"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(receipts)}">
+                    <td colspan="4" class="text-center text-muted py-4">표시할 알림이 없습니다.</td>
+                </tr>
+                <tr th:each="r : ${receipts}">
+                    <td>
+                        <span th:text="${r.noticeTitle}">알림 제목</span>
+                    </td>
+                    <td th:text="${#temporals.format(r.deliveredAt, 'yyyy-MM-dd HH:mm')}">2026-03-05 14:00</td>
+                    <td>
+                        <span th:if="${r.readAt == null}" class="badge text-bg-warning">안읽음</span>
+                        <span th:if="${r.readAt != null}" class="badge text-bg-secondary">읽음</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/notifications/{id}(id=${r.noticeId})}" class="btn btn-sm c-btn c-btn-outline">열기</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

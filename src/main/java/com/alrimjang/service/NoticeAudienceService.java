@@ -12,5 +12,7 @@ public interface NoticeAudienceService {
 
     void markAsRead(String noticeId, String userId);
 
+    boolean hasReceipt(String noticeId, String userId);
+
     List<NoticeReceipt> findMyReceipts(String userId, boolean unreadOnly);
 }

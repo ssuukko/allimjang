@@ -16,6 +16,18 @@
 - PostgreSQL, Flyway
 - Maven, JUnit5, Mockito
 
+## 내가 구현한 핵심 3가지
+1. 채팅방 접근 제어 강제
+- DM/그룹방 규칙을 `ChatRoomAccessService`로 통합하고, 메시지 조회/전송/읽음 API에서 모두 검증하도록 적용
+
+2. 채팅 할 일 상태 전이 규칙
+- `PENDING -> DONE -> CONFIRMED` 상태 흐름을 서비스 레이어에서 강제
+- 담당자만 완료 가능, 생성자만 확인 가능하도록 권한 분리
+
+3. 설문 응답 무결성 검증
+- 기간(시작/마감), 필수문항, 단일선택 개수, 유효한 옵션 ID 여부, 중복 응답을 서비스에서 검증
+- 집계 화면에서 객관식 투표수/비율, 주관식 최근 응답 조회 제공
+
 ## 아키텍처
 
 ```text
@@ -80,6 +92,12 @@ erDiagram
 - 기존 DB에 히스토리 테이블이 없으면 `baseline-on-migrate`로 베이스라인 처리
 - 운영 런북: [`docs/DB_MIGRATION_RUNBOOK.md`](/mnt/d/ssh/allimjang/docs/DB_MIGRATION_RUNBOOK.md)
 - 사전 점검 SQL: [`scripts/db-preflight-check.sql`](/mnt/d/ssh/allimjang/scripts/db-preflight-check.sql)
+
+## 성능/트래픽 기준
+- 메시지 조회 API는 최대 `200`건으로 상한 처리 (`getRecent` limit clamp)
+- 안읽음 카운트/최근순 조회를 위해 채팅/설문/공지 핵심 컬럼에 인덱스 구성
+- 채팅방 목록은 마지막 메시지/과제 기준으로 정렬하고, 읽음 시각(`chat_room_reads`) 기반으로 안읽음 계산
+- 현재 단계는 기능/정합성 중심이며, 대규모 부하테스트(예: k6/JMeter) 수치는 미포함
 
 ## 실행 방법
 

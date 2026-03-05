@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 
 @Mapper
 public interface ChatReadMapper {
-    int markAsRead(@Param("roomId") String roomId, @Param("userId") String userId);
+    int markAsRead(@Param("roomId") String roomId,
+                   @Param("userId") String userId,
+                   @Param("readAt") LocalDateTime readAt);
     LocalDateTime findLastReadAt(@Param("roomId") String roomId, @Param("userId") String userId);
 }
