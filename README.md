@@ -338,16 +338,112 @@ mvn test
 ```
 
 ## 트러블슈팅
-1. `can_post_notification` 컬럼 누락으로 관리자 페이지 500
-   - 조치: Flyway 마이그레이션에 `ALTER TABLE` 반영 + DB 사전 점검 스크립트 도입
 
-2. 설문 Mapper XML 파싱 오류
-   - 원인: XML 특수문자(`<`, `>`) 미이스케이프, 태그 불일치
-   - 조치: `&lt;` `&gt;` 사용 + 부팅 시점 XML 검증 필수화
+### 1. WebSocket STOMP 구독 시 접근 제어 누락
 
-3. 채팅방 접근 제어 누락
-   - 원인: 방 ID만으로 진입 가능한 UI + STOMP 구독 무검증
-   - 조치: `ChatRoomAccessService` + `ChatStompAccessInterceptor` 도입
+**증상:** REST API에는 `ChatRoomAccessService.assertAccessible()`로 접근 제어를 걸었지만, STOMP 구독(`/topic/chat.{roomId}`)에는 검증이 없어 방 ID를 아는 사용자가 비인가 채팅방의 실시간 메시지를 수신할 수 있었습니다.
+
+**원인:** Spring Security의 `SecurityFilterChain`은 HTTP 요청에만 적용됩니다. WebSocket STOMP 메시지는 별도의 `MessageChannel`을 통해 처리되므로 HTTP 레벨 인가가 STOMP 구독에 적용되지 않았습니다.
+
+**조치:** `ChannelInterceptor`를 구현한 `ChatStompAccessInterceptor`를 작성하고 `WebSocketConfig.configureClientInboundChannel()`에 등록했습니다. `StompCommand.SUBSCRIBE` 시점에 destination에서 roomId를 추출한 뒤 `ChatRoomAccessService.assertAccessible()`을 호출하여 비인가 구독을 차단합니다.
+
+```
+SUBSCRIBE /topic/chat.{roomId}
+    → ChatStompAccessInterceptor.preSend()
+        → chatRoomAccessService.assertAccessible(roomId, principal.getName())
+            → DM: 방 토큰에 username 포함 여부 검사
+            → Group: group_members 소속 + type='CHAT' 검사
+```
+
+---
+
+### 2. 채팅방 목록 조회 N+1 쿼리 → CTE 단일 쿼리 최적화
+
+**증상:** 채팅방 목록 API(`/api/chat/rooms`)에서 방 개수가 늘어날수록 응답 시간이 선형 증가. 초기 구현은 "방 목록 조회 → 방마다 마지막 메시지 조회 → 방마다 안읽은 수 조회"로 방 20개 기준 최소 41회 쿼리 실행.
+
+**원인:** Java에서 방별로 `findLastMessage(roomId)`, `countUnread(roomId, userId)`를 반복 호출하는 N+1 구조.
+
+**조치:** PostgreSQL CTE(Common Table Expression) + `DISTINCT ON`으로 단일 쿼리 통합.
+
+```sql
+WITH my_rooms AS (     -- 내 방 목록 (DM + 그룹 + 할 일 기반)
+    SELECT DISTINCT room_id ... UNION ...
+),
+last_message AS (      -- 방별 최근 메시지 (DISTINCT ON)
+    SELECT DISTINCT ON (m.room_id) ... ORDER BY m.room_id, m.created_at DESC
+),
+last_task AS (         -- 방별 최근 할 일
+    SELECT DISTINCT ON (t.room_id) ... ORDER BY t.room_id, t.created_at DESC
+),
+room_base AS (         -- 메시지/할 일 병합
+    SELECT ... FROM my_rooms LEFT JOIN last_message LEFT JOIN last_task
+)
+SELECT room_id, last_message, unread_count   -- 최종 + 안읽음 서브쿼리
+FROM room_base ORDER BY last_message_at DESC
+```
+
+메시지와 할 일 중 최근 것을 `CASE WHEN`으로 판별, 안읽은 카운트도 서브쿼리로 한 번에 계산. `chat_messages(room_id, created_at DESC)` 인덱스가 `DISTINCT ON` 성능 지원.
+
+---
+
+### 3. Spring Security CSRF 토큰과 WebSocket 엔드포인트 충돌
+
+**증상:** WebSocket 연결(`/ws-chat`) 및 채팅 REST API(`/api/chat/**`) 호출 시 403 Forbidden. CSRF 토큰 검증 실패.
+
+**원인:** Spring Security는 모든 POST 요청에 CSRF 토큰을 요구합니다. SockJS 폴백 전송(`/ws-chat/xhr_send`)이 POST로 전송되면서 CSRF 검증에 걸렸고, 채팅 REST API도 JavaScript `fetch`에서 CSRF 토큰 미포함 시 차단.
+
+**조치:** WebSocket과 채팅 API 경로에만 선택적으로 CSRF 비활성화:
+```java
+.csrf(csrf -> csrf.ignoringRequestMatchers("/ws-chat/**", "/api/chat/**"))
+```
+CSRF를 끈 대신 WebSocket 구독은 `ChatStompAccessInterceptor`, REST API는 `ChatRoomAccessService`로 각각 인가를 보장하여 보안 공백을 메웠습니다.
+
+---
+
+### 4. DM Room ID 일관성 — 양방향 관계에서 유일한 식별자 보장
+
+**증상:** 1:1 채팅 시 사용자 A→B와 B→A가 서로 다른 Room ID(`dm__userA__userB` vs `dm__userB__userA`)를 생성하여 별도의 채팅방이 만들어지는 문제.
+
+**원인:** 두 사용자의 username 순서가 요청 방향에 따라 달라지면서, 동일한 1:1 관계임에도 다른 식별자가 생성됨.
+
+**조치:** `buildDirectRoomId()`에서 두 username을 **소문자 변환 + 특수문자 정규화** 후 `compareTo()`로 **사전순 정렬**하여 항상 동일한 Room ID를 보장.
+
+```java
+private String buildDirectRoomId(String usernameA, String usernameB) {
+    String a = normalizeRoomToken(usernameA);  // 소문자 + 특수문자 치환
+    String b = normalizeRoomToken(usernameB);
+    return a.compareTo(b) < 0
+        ? "dm__" + a + "__" + b
+        : "dm__" + b + "__" + a;
+}
+
+private String normalizeRoomToken(String value) {
+    return value.toLowerCase().replaceAll("[^a-z0-9_.-]", "_");
+}
+```
+
+**결과:** 양방향 관계에서 **정규화(canonicalization)** 패턴으로 유일한 식별자를 보장. `ChatRoomAccessService`에서도 동일한 `normalizeRoomToken()`을 사용하여 접근 제어와 일관성 유지.
+
+---
+
+### 5. 사용자 온라인 상태 실시간 추적 — Security 이벤트 기반 설계
+
+**증상:** 채팅 멤버 목록에서 현재 접속 중인 사용자를 표시해야 하는데, WebSocket 연결 상태만으로는 일반 HTTP 페이지를 탐색 중인 사용자의 온라인 상태를 추적할 수 없음.
+
+**원인:** WebSocket 연결/해제 이벤트는 채팅 페이지에서만 발생. 공지 목록, 설문 응답 등 다른 페이지에 있는 사용자도 온라인으로 표시해야 하지만, WebSocket에 의존하면 이를 감지할 수 없음.
+
+**조치:** Spring Security 인증 이벤트 기반으로 전환. `SecurityActivityListener`에서 3가지 이벤트를 `@EventListener`로 수신하여 `ActiveUserTracker`(`ConcurrentHashMap.newKeySet()`)에 상태 반영.
+
+```
+로그인    → AuthenticationSuccessEvent  → markActive(username)
+로그아웃  → LogoutSuccessEvent          → markInactive(username)
+세션 만료 → SessionDestroyedEvent       → markInactive(username)
+```
+
+`HttpSessionEventPublisher` Bean 등록으로 세션 만료 시에도 `SessionDestroyedEvent`가 발행되도록 보장. `ConcurrentHashMap.newKeySet()`으로 멀티스레드 환경에서 안전한 동시 접근 확보.
+
+**결과:** WebSocket에 의존하지 않고 모든 인증 사용자의 온라인 상태를 실시간 추적. 로그아웃/세션 만료 시에도 정확한 상태 갱신.
+
 
 ## 포트폴리오 포인트
 - 단순 CRUD가 아닌 **권한/접근제어/상태전이/실시간 처리/무결성 검증**을 포함한 프로젝트
