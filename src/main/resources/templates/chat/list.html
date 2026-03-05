@@ -31,7 +31,10 @@
         </div>
 
         <div id="chatRoomList" class="d-flex flex-column gap-2">
-            <div class="text-muted small">불러오는 중...</div>
+            <div class="c-loading">
+                <span class="c-loading-spinner" aria-hidden="true"></span>
+                <span>불러오는 중...</span>
+            </div>
         </div>
     </section>
 </main>
@@ -53,7 +56,10 @@
                     <small id="groupMemberCountText" class="text-muted">0명 선택</small>
                 </div>
                 <div id="groupMemberList" class="c-group-member-list">
-                    <div class="small text-muted">불러오는 중...</div>
+                    <div class="c-loading">
+                        <span class="c-loading-spinner" aria-hidden="true"></span>
+                        <span>불러오는 중...</span>
+                    </div>
                 </div>
                 <div class="small text-muted mt-2">단체 채팅은 본인 포함 최소 3명이어야 생성됩니다.</div>
                 <div id="groupCreateError" class="alert alert-danger mt-2 d-none py-2 px-3"></div>
@@ -141,6 +147,23 @@
             groupCreateError.classList.add('d-none');
         };
 
+        const setButtonLoading = function (button, loadingText) {
+            if (!button) return;
+            button.dataset.originalHtml = button.innerHTML;
+            button.innerHTML = '<span class="c-loading c-loading--btn"><span class="c-loading-spinner c-loading-spinner--btn" aria-hidden="true"></span><span>'
+                + (loadingText || '처리중...') + '</span></span>';
+            button.disabled = true;
+        };
+
+        const resetButtonLoading = function (button) {
+            if (!button) return;
+            if (button.dataset.originalHtml) {
+                button.innerHTML = button.dataset.originalHtml;
+                delete button.dataset.originalHtml;
+            }
+            button.disabled = false;
+        };
+
         const selectedMemberUsernames = function () {
             return Array.from(groupMemberList.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(el => el.value);
@@ -172,7 +195,7 @@
         };
 
         const loadMembersForGroupCreate = function () {
-            groupMemberList.innerHTML = '<div class="small text-muted">불러오는 중...</div>';
+            groupMemberList.innerHTML = '<div class="c-loading"><span class="c-loading-spinner" aria-hidden="true"></span><span>불러오는 중...</span></div>';
             return fetch('/api/chat/members')
                 .then(function (res) {
                     if (!res.ok) throw new Error('failed');
@@ -315,6 +338,7 @@
                 showGroupCreateError('최소 2명 이상 선택해 주세요. (본인 포함 3명)');
                 return;
             }
+            setButtonLoading(createGroupRoomSubmitBtn, '생성중...');
             fetch('/api/chat/group-rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -341,6 +365,7 @@
                 })
                 .catch(function (err) {
                     showGroupCreateError(err.message || '채팅방 생성에 실패했습니다.');
+                    resetButtonLoading(createGroupRoomSubmitBtn);
                 });
         });
 

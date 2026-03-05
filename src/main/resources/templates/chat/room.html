@@ -54,7 +54,7 @@
                             <input id="taskAssignee" class="form-control c-input" readonly>
                         </div>
                         <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-primary c-btn c-btn-primary">할 일 지정</button>
+                            <button id="taskCreateBtn" type="submit" class="btn btn-primary c-btn c-btn-primary">할 일 지정</button>
                         </div>
                     </form>
 
@@ -100,6 +100,7 @@
 
     const taskPanel = document.getElementById("taskPanel");
     const taskForm = document.getElementById("taskForm");
+    const taskCreateBtn = document.getElementById("taskCreateBtn");
     const taskTitleInput = document.getElementById("taskTitle");
     const taskDeadlineInput = document.getElementById("taskDeadline");
     const taskAssigneeInput = document.getElementById("taskAssignee");
@@ -119,6 +120,23 @@
     let currentUserId = "";
     let accessibleRooms = [];
     let partnerLastReadAtMs = null;
+
+    function setButtonLoading(button, loadingText) {
+        if (!button) return;
+        button.dataset.originalHtml = button.innerHTML;
+        button.innerHTML = '<span class="c-loading c-loading--btn"><span class="c-loading-spinner c-loading-spinner--btn" aria-hidden="true"></span><span>'
+            + (loadingText || '처리중...') + '</span></span>';
+        button.disabled = true;
+    }
+
+    function resetButtonLoading(button) {
+        if (!button) return;
+        if (button.dataset.originalHtml) {
+            button.innerHTML = button.dataset.originalHtml;
+            delete button.dataset.originalHtml;
+        }
+        button.disabled = false;
+    }
 
     function escapeHtml(value) {
         return String(value)
@@ -363,6 +381,7 @@
     function sendMessage() {
         const content = msgInput.value.trim();
         if (!content || !stompClient || !stompClient.connected) return;
+        setButtonLoading(sendBtn, '전송중...');
 
         stompClient.send("/app/chat/send", {}, JSON.stringify({
             roomId: roomId,
@@ -370,6 +389,9 @@
         }));
         msgInput.value = "";
         msgInput.focus();
+        window.setTimeout(function () {
+            resetButtonLoading(sendBtn);
+        }, 250);
     }
 
     function refreshUnreadCount() {
@@ -662,6 +684,7 @@
             showTaskError('할 일, 마감일시, 담당자를 모두 입력해 주세요.');
             return;
         }
+        setButtonLoading(taskCreateBtn, '지정중...');
 
         fetch('/api/chat/rooms/' + encodeURIComponent(roomId) + '/tasks', {
             method: 'POST',
@@ -685,9 +708,11 @@
                 const nextHour = new Date(Date.now() + (60 * 60 * 1000));
                 taskDeadlineInput.value = normalizeDateTimeLocal(nextHour);
                 refreshTasks();
+                resetButtonLoading(taskCreateBtn);
             })
             .catch(err => {
                 showTaskError(err.message);
+                resetButtonLoading(taskCreateBtn);
             });
     }
 

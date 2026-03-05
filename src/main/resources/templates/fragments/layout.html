@@ -37,7 +37,12 @@
                         <div class="dropdown-menu dropdown-menu-end p-0 c-notice-preview-menu" aria-labelledby="noticePreviewButton">
                             <div class="c-notice-preview-header">최근 알림</div>
                             <div id="noticePreviewList" class="c-notice-preview-list">
-                                <div class="c-notice-preview-empty">불러오는 중...</div>
+                                <div class="c-notice-preview-empty">
+                                    <div class="c-loading">
+                                        <span class="c-loading-spinner" aria-hidden="true"></span>
+                                        <span>불러오는 중...</span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="c-notice-preview-footer">
                                 <a href="/notifications" class="small text-decoration-none">전체 알림 보기</a>
@@ -46,7 +51,7 @@
                     </div>
                 </li>
                 <li class="nav-item d-flex align-items-center">
-                    <form th:action="@{/logout}" method="post" class="m-0 p-0">
+                    <form th:action="@{/logout}" method="post" class="m-0 p-0" data-no-loading="true">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit"
                                 class="nav-link btn btn-link p-0 border-0 text-decoration-none">
@@ -71,7 +76,10 @@
             </div>
         </div>
         <div id="globalMemberList" class="c-member-panel__list">
-            <div class="text-muted small">불러오는 중...</div>
+            <div class="c-loading">
+                <span class="c-loading-spinner" aria-hidden="true"></span>
+                <span>불러오는 중...</span>
+            </div>
         </div>
     </aside>
 
@@ -80,6 +88,38 @@
     </div>
 
     <script>
+        (function () {
+            const bindLoadingSubmit = function () {
+                document.querySelectorAll('form:not([data-no-loading="true"])').forEach(function (form) {
+                    form.addEventListener('submit', function () {
+                        const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+                        if (!submitButton || submitButton.dataset.loadingBound === 'true') return;
+
+                        if (submitButton.tagName.toLowerCase() === 'input') {
+                            submitButton.dataset.originalValue = submitButton.value || '';
+                            submitButton.value = submitButton.dataset.loadingText || '처리중...';
+                            submitButton.disabled = true;
+                            submitButton.dataset.loadingBound = 'true';
+                            return;
+                        }
+
+                        submitButton.dataset.originalHtml = submitButton.innerHTML;
+                        const loadingText = submitButton.dataset.loadingText || '처리중...';
+                        submitButton.innerHTML = '<span class="c-loading c-loading--btn"><span class="c-loading-spinner c-loading-spinner--btn" aria-hidden="true"></span><span>'
+                            + loadingText + '</span></span>';
+                        submitButton.disabled = true;
+                        submitButton.dataset.loadingBound = 'true';
+                    });
+                });
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindLoadingSubmit);
+            } else {
+                bindLoadingSubmit();
+            }
+        })();
+
         (function () {
             const button = document.getElementById('noticePreviewButton');
             const list = document.getElementById('noticePreviewList');

@@ -1281,6 +1281,41 @@ a:hover {
     animation: c-fade-up 0.5s ease both;
 }
 
+.c-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #607089;
+    font-size: 0.9rem;
+}
+
+.c-loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(96, 112, 137, 0.28);
+    border-top-color: #324766;
+    border-radius: 50%;
+    animation: c-spin 0.75s linear infinite;
+}
+
+@keyframes c-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.c-loading--btn {
+    color: inherit;
+    font-size: 0.9em;
+}
+
+.c-loading-spinner--btn {
+    width: 14px;
+    height: 14px;
+    border-color: rgba(255, 255, 255, 0.38);
+    border-top-color: currentColor;
+}
+
 @media (max-width: 992px) {
     .c-auth-panel {
         grid-template-columns: 1fr;
