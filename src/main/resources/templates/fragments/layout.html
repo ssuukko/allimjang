@@ -160,6 +160,7 @@
 
             let selectedUsername = null;
             let refreshMembers = null;
+            let ignoreHideUntil = 0;
 
             const setPanelOpen = function (open) {
                 panel.classList.toggle('is-collapsed', !open);
@@ -167,6 +168,7 @@
             };
 
             const hideMenu = function () {
+                if (Date.now() < ignoreHideUntil) return;
                 if (!menu) return;
                 menu.classList.add('d-none');
                 selectedUsername = null;
@@ -204,9 +206,14 @@
 
             const showMenu = function (x, y, username) {
                 selectedUsername = username;
-                menu.style.left = x + 'px';
-                menu.style.top = y + 'px';
                 menu.classList.remove('d-none');
+                const menuWidth = menu.offsetWidth || 140;
+                const menuHeight = menu.offsetHeight || 44;
+                const left = Math.min(Math.max(8, x), Math.max(8, window.innerWidth - menuWidth - 8));
+                const top = Math.min(Math.max(8, y), Math.max(8, window.innerHeight - menuHeight - 8));
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+                ignoreHideUntil = Date.now() + 180;
             };
 
             const renderMembers = function (members) {
@@ -247,6 +254,7 @@
                 if (!item) return;
                 if (item.dataset.me === 'true') return;
                 e.preventDefault();
+                e.stopPropagation();
                 showMenu(e.clientX, e.clientY, item.dataset.username);
             });
 
@@ -254,13 +262,13 @@
                 const item = e.target.closest('.c-member-item');
                 if (!item) return;
                 if (item.dataset.me === 'true') return;
+                e.preventDefault();
+                e.stopPropagation();
                 const rect = item.getBoundingClientRect();
                 const x = Math.min(rect.right - 10, window.innerWidth - 12);
                 const y = Math.min(rect.top + 8, window.innerHeight - 12);
                 showMenu(x, y, item.dataset.username);
             });
-
-            list.addEventListener('click', hideMenu);
 
             chatAction.addEventListener('click', function () {
                 if (!selectedUsername) return;
