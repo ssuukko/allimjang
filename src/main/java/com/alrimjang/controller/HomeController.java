@@ -59,6 +59,12 @@ public class HomeController {
         return "error/403";
     }
 
+    @GetMapping("/health")
+    @ResponseBody
+    public String health() {
+        return "ok";
+    }
+
     /**
      * 서버 정보 API
      */

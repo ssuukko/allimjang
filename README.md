@@ -1,4 +1,4 @@
-# Alrimjang
+1# Alrimjang
 
 조직 공지 · 실시간 채팅 · 할 일 · 설문을 통합한 Spring Boot 기반 협업 시스템입니다.
 

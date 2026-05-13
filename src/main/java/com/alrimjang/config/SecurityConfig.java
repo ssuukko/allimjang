@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/ws-chat/**", "/api/chat/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                        .requestMatchers("/login", "/login-process", "/register", "/error", "/access-denied").permitAll()
+                        .requestMatchers("/login", "/login-process", "/register", "/error", "/access-denied", "/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/admin/notifications/new").hasAnyRole("NOTIFICATION_WRITER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/admin/notifications").hasAnyRole("NOTIFICATION_WRITER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
