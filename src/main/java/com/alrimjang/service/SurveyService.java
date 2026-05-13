@@ -16,6 +16,7 @@ public interface SurveyService {
                       String creatorUsername);
 
     List<Survey> getPublishedSurveys(String username);
+    List<Survey> getPublishedSurveySummaries();
     List<Survey> getAllSurveysForAdmin();
 
     Survey getSurveyForAnswer(String surveyId, String username);

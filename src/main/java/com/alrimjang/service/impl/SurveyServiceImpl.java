@@ -131,6 +131,16 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     @Override
+    public List<Survey> getPublishedSurveySummaries() {
+        List<Survey> surveys = surveyMapper.findPublishedSurveys();
+        for (Survey survey : surveys) {
+            survey.setResponseCount(surveyMapper.countResponses(survey.getId()));
+            survey.setResponded(false);
+        }
+        return surveys;
+    }
+
+    @Override
     public List<Survey> getAllSurveysForAdmin() {
         List<Survey> surveys = surveyMapper.findAllSurveys();
         for (Survey survey : surveys) {

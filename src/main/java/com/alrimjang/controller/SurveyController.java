@@ -22,10 +22,9 @@ public class SurveyController {
 
     @GetMapping("/surveys")
     public String surveyList(Model model, Principal principal) {
-        if (principal == null) {
-            return "redirect:/login";
-        }
-        List<Survey> surveys = surveyService.getPublishedSurveys(principal.getName());
+        List<Survey> surveys = principal == null
+                ? surveyService.getPublishedSurveySummaries()
+                : surveyService.getPublishedSurveys(principal.getName());
         model.addAttribute("surveys", surveys);
         return "surveys/list";
     }

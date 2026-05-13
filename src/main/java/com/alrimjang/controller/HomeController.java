@@ -44,9 +44,7 @@ public class HomeController {
                 && !(authentication instanceof AnonymousAuthenticationToken)) {
             return "redirect:/dashboard";
         }
-        model.addAttribute("serverName", serverName);
-        model.addAttribute("description", description);
-        return "index";
+        return "redirect:/dashboard";
     }
 
     @GetMapping("/dashboard")

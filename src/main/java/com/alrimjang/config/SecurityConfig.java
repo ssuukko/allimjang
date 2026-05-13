@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .requestMatchers("/login", "/login-process", "/register", "/error", "/access-denied", "/health").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/", "/dashboard", "/notices", "/surveys").permitAll()
                         .requestMatchers(HttpMethod.GET, "/admin/notifications/new").hasAnyRole("NOTIFICATION_WRITER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/admin/notifications").hasAnyRole("NOTIFICATION_WRITER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
